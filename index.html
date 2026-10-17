@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pip's Midnight Nursery</title>
+  <link rel="icon" href="assets/images/pip_portrait.jpg" type="image/jpeg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="hero" id="top">
+    <div id="secret-moon" class="moon" aria-label="A glowing moon." role="button" tabindex="0">
+      <div class="moon-face">
+        <span class="eye"></span>
+        <span class="eye"></span>
+      </div>
+    </div>
+
+    <div class="section-inner">
+      <h1>Somewhere between sleep and starlight, Pip is dreaming.</h1>
+      
+      <!-- HERO IMAGE -->
+      <img src="assets/images/pip_avatar_cloud.jpg" alt="Pip" style="width: 300px; height: 300px; object-fit: contain; margin: 2rem auto; border-radius: 50%;">
+      
+      <p>Pip is a tiny dream-collector who catches forgotten dreams as they drift out of sleepy windows — and turns them back into magic. Tonight, the nursery door is open. Come in.</p>
+      <a href="#engine" class="btn">Enter Pip's Dreamworld</a>
+      <a href="#meet" class="btn">Discover Pip's little universe</a>
+    </div>
+  </header>
+
+  <section class="meet" id="meet">
+    <div class="section-inner">
+      <h2>Meet Pip</h2>
+      
+      <!-- PORTRAIT IMAGE -->
+      <img src="assets/images/pip_portrait.jpg" alt="Pip Portrait" style="width: 250px; height: 250px; object-fit: contain; margin: 0 auto 2rem auto; border-radius: 50%;">
+      
+      <p>Pip is about the height of a teacup, wears a nightcap made from an old star, and has a soft spot for anything that glows. Pip doesn't sleep much — someone has to keep watch over all the dreams that wander out of children's bedrooms at midnight.</p>
+      <p><strong>Powers:</strong> catching falling dreams, humming them back to life, folding starlight into lanterns.</p>
+    </div>
+  </section>
+
+  <section class="story" id="story">
+    <div class="section-inner">
+      <h2>Pip's Story</h2>
+      <article class="story-scene">
+        <h3>i. The night the star arrived</h3>
+        <p>One night, a tiny star slipped through Pip's window and landed in a teacup. It wasn't lost — it was carrying something. Pip had never seen a star with pockets before.</p>
+      </article>
+      <article class="story-scene">
+        <h3>ii. What the star was holding</h3>
+        <p>Inside its pockets were dreams — the small, forgotten kind. The star asked Pip to keep them safe.</p>
+      </article>
+      <article class="story-scene">
+        <h3>iii. The nursery that grew</h3>
+        <p>So Pip built a nursery — not for children, but for dreams. A room with a lantern for every lost dream, and a music box for every happy one.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="creations" id="creations">
+    <div class="section-inner">
+      <h2>Pip's little creations</h2>
+
+      <div class="creation-card">
+        <h3>Moonlight Lantern</h3>
+        <!-- LANTERN IMAGE -->
+        <img src="assets/images/pip_dream_lantern.jpg" alt="Lantern" style="width: 200px; height: 200px; object-fit: contain; margin: 1rem auto;">
+        <p>A lantern that turns dark corners into tiny constellations.</p>
+        <button class="btn open-modal" data-target="modal-lantern">Tell me more</button>
+      </div>
+
+      <div class="creation-card">
+        <h3>The Unicorn Dreambox</h3>
+        <!-- MUSIC BOX IMAGE -->
+        <img src="assets/images/pip_lullaby_box.jpg" alt="Music Box" style="width: 200px; height: 200px; object-fit: contain; margin: 1rem auto;">
+        <p>A musical box that stores the happiest dreams, one note at a time.</p>
+        <button class="btn open-modal" data-target="modal-dreambox">Tell me more</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="engine" id="engine">
+    <div class="section-inner">
+      <h2>The Dream Engine</h2>
+      <p>Choose a mood, a companion, and a destination. Pip will weave them into a dream just for you.</p>
+
+      <form id="engine-form">
+        <fieldset style="margin-bottom: 1.5rem; border: none; padding: 0;">
+          <legend><strong>Choose a mood</strong></legend>
+          <button type="button" class="chip" data-group="mood" data-value="peaceful">Peaceful</button>
+          <button type="button" class="chip" data-group="mood" data-value="adventurous">Adventurous</button>
+          <button type="button" class="chip" data-group="mood" data-value="magical">Magical</button>
+        </fieldset>
+
+        <fieldset style="margin-bottom: 1.5rem; border: none; padding: 0;">
+          <legend><strong>Choose a companion</strong></legend>
+          <button type="button" class="chip" data-group="companion" data-value="moon">Moon</button>
+          <button type="button" class="chip" data-group="companion" data-value="unicorn">Unicorn</button>
+          <button type="button" class="chip" data-group="companion" data-value="star">Star</button>
+        </fieldset>
+
+        <fieldset style="margin-bottom: 1.5rem; border: none; padding: 0;">
+          <legend><strong>Choose a destination</strong></legend>
+          <button type="button" class="chip" data-group="place" data-value="cloud-kingdom">Cloud Kingdom</button>
+          <button type="button" class="chip" data-group="place" data-value="starlight-forest">Starlight Forest</button>
+          <button type="button" class="chip" data-group="place" data-value="moon-garden">Moon Garden</button>
+        </fieldset>
+
+        <button type="submit" class="btn" id="create-dream">Create My Dream ✨</button>
+        <p id="engine-hint" style="margin-top: 1rem; font-weight: bold; color: #C98B9B;"></p>
+      </form>
+
+      <div id="dream-card-wrap" hidden style="margin-top: 2rem; padding: 2rem; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 600px; margin-left: auto; margin-right: auto;">
+        <h3 id="dream-title" style="color: #252642;">Your dream</h3>
+        <p id="dream-story"></p>
+        <button id="copy-dream" class="btn">Copy my dream</button>
+        <button id="dream-again" class="btn" style="background-color: transparent; color: #252642; border: 2px solid #252642;">Dream again</button>
+        <p id="copy-feedback" style="margin-top: 1rem; color: #252642; font-weight: bold;"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="goodnight" id="goodnight">
+    <div class="section-inner">
+      <h2>Goodnight from the nursery.</h2>
+      <p style="font-style: italic; font-size: 1.3rem;">"Dreams are just stars that forgot how to float. I'll take care of them until you're ready to dream again." <br>— Pip</p>
+      <a href="#engine" class="btn">Make one more dream</a>
+      <a href="#top" class="btn" style="background-color: transparent; color: #FFF7ED; border: 2px solid #FFF7ED;">Back to the nursery</a>
+    </div>
+  </section>
+
+  <div class="modal" id="modal-lantern" hidden>
+    <button class="modal-close">×</button>
+    <h3>Moonlight Lantern</h3>
+    <p>Pip made the first lantern from the nightlight that used to keep the nursery warm. Hold it in a dark corner for ten seconds and the shadows begin to look like stars.</p>
+  </div>
+
+  <div class="modal" id="modal-dreambox" hidden>
+    <button class="modal-close">×</button>
+    <h3>The Unicorn Dreambox</h3>
+    <p>Every time someone laughs in their sleep, the Dreambox plays a note. Pip keeps it on the windowsill so it can catch the moonlight just right — the notes sound warmer that way.</p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
