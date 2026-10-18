@@ -797,3 +797,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border: 1px solid rgba(246, 217, 139, .35);
 }
 #guestbookEntries p { margin: .3rem 0 0; }
+#guestbook {
+  background: linear-gradient(180deg, #1d1a45, #2a2350);
+  color: #f4ecff;
+  max-width: 680px;
+  margin: 3rem auto;
+  padding: 2.5rem 1.5rem;
+  border-radius: 28px;
+  box-shadow: 0 10px 40px rgba(20, 15, 60, .35);
+}
+#guestbook h2,
+#guestbook p,
+#guestbook label,
+#guestbook strong,
+#guestbookStatus {
+  color: #f4ecff;
+}
+#guestbookForm input::placeholder,
+#guestbookForm textarea::placeholder {
+  color: rgba(244, 236, 255, .6);
+}
+#guestbookEntries strong { color: #f6d98b; }
