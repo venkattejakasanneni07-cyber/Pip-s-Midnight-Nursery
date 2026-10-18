@@ -23,6 +23,22 @@
   var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
   var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
+  /* Lower-page features start one at a time after the page has loaded, so the browser never
+     freezes on one long script task (this keeps Total Blocking Time low). */
+  var laterQueue = [];
+  function later(fn) { laterQueue.push(fn); }
+  function whenIdle(cb) {
+    if (window.requestIdleCallback) window.requestIdleCallback(cb, { timeout: 400 });
+    else setTimeout(cb, 40);
+  }
+  function runLater() {
+    var fn = laterQueue.shift();
+    if (!fn) return;
+    try { fn(); } catch (err) { if (window.console) console.error(err); }
+    whenIdle(runLater);
+  }
+  window.addEventListener('load', function () { whenIdle(runLater); });
+
   /* ---------- 2. Stars + optional official artwork ---------- */
   function makeStars(container, count) {
     if (!container) return;
@@ -907,7 +923,7 @@
   renderShelf();
 
   /* ---------- Tier 2: Dream Delivery map (the route draws as you scroll) ---------- */
-  (function () {
+  later(function () {
     var map = $('#deliveryMap'), line = $('#routeLine'), marker = $('#routeMarker');
     var stopsG = $('#routeStops'), note = $('#deliveryNote');
     if (!map || !line || !marker || !stopsG || !line.getTotalLength) return;
@@ -965,10 +981,10 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     apply(0); onScroll();
-  })();
+  });
 
   /* ---------- Tier 2: Pip's pocket storybook (page-turn flip: buttons, swipe, arrow keys) ---------- */
-  (function () {
+  later(function () {
     var book = $('#book'), prev = $('#bookPrev'), next = $('#bookNext'), count = $('#bookCount');
     if (!book || !prev || !next || !count) return;
     var pages = $$('.page', book), cur = 0, total = pages.length;
@@ -1002,10 +1018,10 @@
     });
     book.addEventListener('pointercancel', function () { startX = null; });
     render();
-  })();
+  });
 
   /* ---------- Tier 2: Pip's nightlight (a spotlight that reveals hidden wishes) ---------- */
-  (function () {
+  later(function () {
     var stage = $('#nightlight'), wrap = $('#nlWishes'), countEl = $('#nlCount'), resetBtn = $('#nlReset');
     if (!stage || !wrap || !countEl || !resetBtn) return;
     var WORDS = ['a soft cloud', 'a warm lantern', 'a quiet lullaby', 'a moon hug', 'a sleepy sheep', 'a starry blanket'];
@@ -1067,10 +1083,10 @@
     resetBtn.addEventListener('click', function () { build(); setLight(stage.clientWidth / 2, stage.clientHeight / 2, true); });
     window.addEventListener('resize', function () { size(); setLight(lx, ly, true); });
     size(); build(); setLight(stage.clientWidth / 2, stage.clientHeight / 2, true);
-  })();
+  });
 
   /* ---------- Tier 2: mini-game, catch the falling dreams ---------- */
-  (function () {
+  later(function () {
     var cv = $('#gameCanvas'), startBtn = $('#gameStart'), status = $('#gameStatus');
     if (!cv || !cv.getContext || !startBtn || !status) return;
     var W = 400, H = 320, DPR = 2, ROUND = 30;
@@ -1212,14 +1228,14 @@
     cv.addEventListener('blur', function () { keys.left = keys.right = false; });
     startBtn.addEventListener('click', start);
     sync();
-  })();
+  });
 
   /* ---------- Tier 1: Pip's eyes follow the pointer ----------
      The official picture is never edited. Two small patches in the socket colour
      cover the painted glints, and two new glints slide toward the pointer. The eyes
      only appear when the real picture has loaded (not on the backup drawing) and
      are skipped when the visitor prefers reduced motion. */
-  (function () {
+  later(function () {
     if (reduceMotion) return;
     var box = $('.pip-art');
     if (!box) return;
@@ -1274,10 +1290,10 @@
       if (e.pointerType === 'mouse' || !eyes.length) return;
       look(e.clientX, e.clientY); later(1500);
     }, { passive: true });
-  })();
+  });
 
   /* ---------- Pip talks when you tap Pip ---------- */
-  (function () {
+  later(function () {
     var hit = $('#pipHit'), bubble = $('#pipBubble'), art = $('.pip-wrap .pip-art');
     if (!hit || !bubble) return;
     var lines = [
@@ -1307,7 +1323,7 @@
         art.classList.remove('wiggle'); void art.offsetWidth; art.classList.add('wiggle');
       }
     });
-  })();
+  });
 
   /* ---------- Visit odometer (counts visits from THIS browser only) ---------- */
   (function () {
@@ -1390,7 +1406,7 @@
   })();
 
   /* ---------- Tier 3: Chat with Pip (rule-based dialogue in Pip's voice, no server) ---------- */
-  (function () {
+  later(function () {
     var log = $('#chatLog'), form = $('#chatForm'), input = $('#chatInput'), chips = $('#chatChips');
     var nameForm = $('#nameForm'), nameInput = $('#nameInput'), nameStatus = $('#nameStatus'), forgetBtn = $('#forgetBtn');
     if (!log || !form || !input || !nameForm || !nameInput || !forgetBtn) return;
@@ -1594,7 +1610,7 @@
 
     /* opening line: a personal greeting that uses what Pip remembers */
     addMsg('pip', memory.greeting() + ' Type something, or tap a suggestion below.');
-  })();
+  });
 
   /* ---------- 11. Magical transition into the Dream Engine ---------- */
   var portal = $('#portal');
