@@ -2,123 +2,509 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#fff8ef">
-  <meta name="description" content="Step into Pip's Midnight Nursery — a tiny world where dreams are designed, repaired, and delivered.">
-  <title>Pip's Midnight Nursery — Little Dream Architect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pip's Midnight Nursery</title>
+  <meta name="description" content="Step into Pip's bedroom, where forgotten dreams are collected, kept and rediscovered. Make your own dream with the Dream Engine.">
+  <meta name="theme-color" content="#252642">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23252642'/%3E%3Cpath d='M20 6a10 10 0 1 0 0 20a8 8 0 0 1 0-20z' fill='%23F5D58A'/%3E%3C/svg%3E">
+
+  <!-- Optional web fonts. If they fail to load, the fallback fonts in style.css are used. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
-  <header class="topbar">
-    <a class="brand" href="#home" aria-label="Pip's Midnight Nursery home"><span class="brand-mark">✳</span><span>PIP'S<br><small>MIDNIGHT NURSERY</small></span></a>
-    <nav aria-label="Main navigation">
-      <a href="#story">The story</a><a href="#workshop">Dream works</a><a href="#dream-engine">Make a dream</a>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ===== SVG illustration library (original placeholder art, used when no official file is found) ===== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <radialGradient id="g-gold" cx="50%" cy="40%" r="60%">
+        <stop offset="0%" stop-color="#FFF2C4"/>
+        <stop offset="100%" stop-color="#F5D58A"/>
+      </radialGradient>
+      <linearGradient id="g-body" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#FFFBF3"/>
+        <stop offset="100%" stop-color="#FBE6D2"/>
+      </linearGradient>
+    </defs>
+
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="M12 2.2l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.2 6 20.6l1.3-6.7-5-4.7 6.8-.8z" fill="currentColor" stroke-linejoin="round"/>
+    </symbol>
+
+    <!-- Pip -->
+    <symbol id="i-pip" viewBox="0 0 220 260">
+      <ellipse cx="110" cy="247" rx="58" ry="9" fill="#252642" opacity=".18"/>
+      <!-- ears -->
+      <ellipse cx="52" cy="92" rx="20" ry="26" fill="url(#g-body)" stroke="#4A4670" stroke-width="3" transform="rotate(-22 52 92)"/>
+      <ellipse cx="52" cy="94" rx="10" ry="15" fill="#F5C9D5" transform="rotate(-22 52 92)"/>
+      <ellipse cx="168" cy="92" rx="20" ry="26" fill="url(#g-body)" stroke="#4A4670" stroke-width="3" transform="rotate(22 168 92)"/>
+      <ellipse cx="168" cy="94" rx="10" ry="15" fill="#F5C9D5" transform="rotate(22 168 92)"/>
+      <!-- body -->
+      <path d="M110 120c-46 0-70 38-70 78 0 30 24 48 70 48s70-18 70-48c0-40-24-78-70-78z" fill="url(#g-body)" stroke="#4A4670" stroke-width="3"/>
+      <path d="M110 170a30 30 0 1 0 0 56a24 24 0 0 1 0-56z" fill="#F5D58A" opacity=".9"/>
+      <!-- feet -->
+      <ellipse cx="78" cy="243" rx="20" ry="9" fill="#FBE6D2" stroke="#4A4670" stroke-width="3"/>
+      <ellipse cx="142" cy="243" rx="20" ry="9" fill="#FBE6D2" stroke="#4A4670" stroke-width="3"/>
+      <!-- head -->
+      <circle cx="110" cy="100" r="62" fill="url(#g-body)" stroke="#4A4670" stroke-width="3"/>
+      <!-- nightcap -->
+      <path d="M52 78C60 30 110 10 150 28c22 10 40 34 54 66c-14-8-30-12-48-12-34 0-72 0-104-4z" fill="#D8C9F0" stroke="#4A4670" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M50 82c34 6 76 6 108 1" fill="none" stroke="#FFF7ED" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="204" cy="96" r="12" fill="url(#g-gold)" stroke="#4A4670" stroke-width="3"/>
+      <use href="#i-star" x="108" y="30" width="20" height="20" color="#F5D58A"/>
+      <!-- face -->
+      <ellipse cx="84" cy="112" rx="7" ry="9" fill="#252642"/>
+      <ellipse cx="136" cy="112" rx="7" ry="9" fill="#252642"/>
+      <circle cx="86.5" cy="108" r="2.6" fill="#fff"/>
+      <circle cx="138.5" cy="108" r="2.6" fill="#fff"/>
+      <ellipse cx="68" cy="130" rx="11" ry="7" fill="#F5C9D5" opacity=".95"/>
+      <ellipse cx="152" cy="130" rx="11" ry="7" fill="#F5C9D5" opacity=".95"/>
+      <path d="M100 128q10 9 20 0" fill="none" stroke="#252642" stroke-width="3" stroke-linecap="round"/>
+      <!-- arms + star -->
+      <ellipse cx="52" cy="190" rx="13" ry="22" fill="url(#g-body)" stroke="#4A4670" stroke-width="3" transform="rotate(18 52 190)"/>
+      <ellipse cx="168" cy="190" rx="13" ry="22" fill="url(#g-body)" stroke="#4A4670" stroke-width="3" transform="rotate(-18 168 190)"/>
+      <use href="#i-star" x="150" y="150" width="40" height="40" color="#F5D58A"/>
+    </symbol>
+
+    <!-- Moonlight Lantern -->
+    <symbol id="i-lantern" viewBox="0 0 200 240">
+      <path d="M72 44q28-40 56 0" fill="none" stroke="#4A4670" stroke-width="5" stroke-linecap="round"/>
+      <rect x="62" y="40" width="76" height="16" rx="8" fill="#F5D58A" stroke="#4A4670" stroke-width="3"/>
+      <path d="M52 78c0-14 12-22 48-22s48 8 48 22v82c0 20-14 30-48 30s-48-10-48-30z" fill="#FFF2C4" stroke="#4A4670" stroke-width="3"/>
+      <path d="M52 78c0-14 12-22 48-22s48 8 48 22v82c0 20-14 30-48 30s-48-10-48-30z" fill="url(#g-gold)" opacity=".75"/>
+      <rect x="58" y="186" width="84" height="20" rx="10" fill="#F5D58A" stroke="#4A4670" stroke-width="3"/>
+      <g stroke="#7A6AA8" stroke-width="2" fill="none" stroke-linecap="round">
+        <path d="M78 100l22 20 26-30M100 120l-8 34M126 90l4-18"/>
+      </g>
+      <g fill="#4A4670">
+        <circle cx="78" cy="100" r="4"/><circle cx="100" cy="120" r="4.5"/><circle cx="126" cy="90" r="4"/><circle cx="92" cy="154" r="3.5"/><circle cx="130" cy="72" r="3"/>
+      </g>
+    </symbol>
+
+    <!-- Unicorn music box -->
+    <symbol id="i-musicbox" viewBox="0 0 240 220">
+      <ellipse cx="120" cy="206" rx="86" ry="8" fill="#252642" opacity=".18"/>
+      <rect x="30" y="130" width="180" height="72" rx="20" fill="#F5C9D5" stroke="#4A4670" stroke-width="3"/>
+      <rect x="40" y="112" width="160" height="30" rx="14" fill="#D8C9F0" stroke="#4A4670" stroke-width="3"/>
+      <g fill="#FFF7ED" opacity=".9"><circle cx="70" cy="168" r="6"/><circle cx="100" cy="168" r="6"/><circle cx="130" cy="168" r="6"/><circle cx="160" cy="168" r="6"/></g>
+      <!-- unicorn -->
+      <path d="M92 112c-6-26 4-52 26-56 12-2 22 6 24 18l18 8-16 10c-2 8-8 14-14 20z" fill="#FFF7ED" stroke="#4A4670" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M126 58l8-30 8 36z" fill="url(#g-gold)" stroke="#4A4670" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M102 62c-18 4-22 22-14 40 4-14 10-20 18-24-6-4-8-10-4-16z" fill="#D8C9F0" stroke="#4A4670" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="132" cy="76" r="3.4" fill="#252642"/>
+      <circle cx="146" cy="88" r="3" fill="#F5C9D5"/>
+      <path d="M212 112q14 6 10 22" fill="none" stroke="#4A4670" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="222" cy="138" r="6" fill="url(#g-gold)" stroke="#4A4670" stroke-width="3"/>
+    </symbol>
+
+    <!-- Cloud Pillow -->
+    <symbol id="i-pillow" viewBox="0 0 240 200">
+      <ellipse cx="120" cy="188" rx="90" ry="8" fill="#252642" opacity=".15"/>
+      <path d="M44 150c-24 0-32-32-10-44-8-26 22-44 44-30 10-26 54-30 68-4 26-10 48 10 40 32 22 8 20 46-8 46z" fill="#FFF7ED" stroke="#4A4670" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M70 130c18-20 34-6 52-20s34 8 54 18" fill="none" stroke="#D8C9F0" stroke-width="7" stroke-linecap="round"/>
+      <path d="M64 146c20-10 40 4 64-4s36 2 50 4" fill="none" stroke="#F5C9D5" stroke-width="7" stroke-linecap="round"/>
+      <use href="#i-star" x="158" y="76" width="22" height="22" color="#F5D58A"/>
+      <circle cx="84" cy="98" r="5" fill="#F5D58A"/>
+      <circle cx="104" cy="86" r="3" fill="#F5D58A"/>
+    </symbol>
+
+    <!-- Story scene art -->
+    <symbol id="i-window" viewBox="0 0 240 260">
+      <rect x="30" y="20" width="180" height="220" rx="90" ry="90" fill="#1B1C38" stroke="#D8C9F0" stroke-width="6"/>
+      <path d="M120 20v220M30 130h180" stroke="#D8C9F0" stroke-width="5"/>
+      <use href="#i-star" x="140" y="150" width="34" height="34" color="#F5D58A"/>
+      <g fill="#FFF7ED"><circle cx="70" cy="70" r="2.5"/><circle cx="90" cy="110" r="2"/><circle cx="170" cy="60" r="2.5"/><circle cx="60" cy="180" r="2"/><circle cx="188" cy="104" r="2"/></g>
+      <path d="M12 244h216" stroke="#D8C9F0" stroke-width="8" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-jars" viewBox="0 0 260 220">
+      <g stroke="#D8C9F0" stroke-width="3" fill="rgba(255,247,237,.12)">
+        <rect x="24" y="90" width="64" height="100" rx="18"/><rect x="98" y="60" width="64" height="130" rx="18"/><rect x="172" y="100" width="64" height="90" rx="18"/>
+      </g>
+      <g stroke="#D8C9F0" stroke-width="3" fill="#F5D58A"><rect x="32" y="80" width="48" height="14" rx="6"/><rect x="106" y="50" width="48" height="14" rx="6"/><rect x="180" y="90" width="48" height="14" rx="6"/></g>
+      <circle cx="56" cy="150" r="14" fill="#F5C9D5"/><circle cx="130" cy="130" r="18" fill="#D8C9F0"/><circle cx="204" cy="152" r="13" fill="#F5D58A"/>
+      <use href="#i-star" x="116" y="100" width="28" height="28" color="#FFF7ED"/>
+      <path d="M12 196h236" stroke="#D8C9F0" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-bed" viewBox="0 0 280 200">
+      <rect x="20" y="110" width="240" height="46" rx="14" fill="#F5C9D5" stroke="#4A4670" stroke-width="3"/>
+      <rect x="20" y="70" width="20" height="110" rx="8" fill="#D8C9F0" stroke="#4A4670" stroke-width="3"/>
+      <rect x="240" y="90" width="20" height="90" rx="8" fill="#D8C9F0" stroke="#4A4670" stroke-width="3"/>
+      <rect x="48" y="90" width="64" height="30" rx="14" fill="#FFF7ED" stroke="#4A4670" stroke-width="3"/>
+      <path d="M120 112h120v40H120z" fill="#D8C9F0" stroke="#4A4670" stroke-width="3"/>
+      <use href="#i-lantern" x="196" y="20" width="52" height="62"/>
+      <use href="#i-star" x="140" y="40" width="22" height="22" color="#F5D58A"/>
+      <use href="#i-star" x="70" y="34" width="16" height="16" color="#F5D58A"/>
+    </symbol>
+  </svg>
+
+  <!-- ===== Header ===== -->
+  <header class="site-header" id="top">
+    <a class="brand" href="#dreamworld" aria-label="Pip's Midnight Nursery, back to the top">
+      <svg class="brand-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3a9 9 0 1 0 0 18a7 7 0 0 1 0-18z" fill="currentColor"/></svg>
+      <span>Pip's Midnight Nursery</span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="site-nav" id="siteNav" aria-label="Main">
+      <a href="#meet">Meet Pip</a>
+      <a href="#story">Story</a>
+      <a href="#creations">Creations</a>
+      <a href="#engine" data-enter-engine>Dream Engine</a>
+      <a href="#goodbye">Goodnight</a>
     </nav>
-    <button class="sound-toggle" id="soundToggle" aria-pressed="false" title="Toggle gentle sound"><span class="sound-dot"></span><span id="soundLabel">Sound off</span></button>
+
+    <button class="sound-toggle" id="soundToggle" aria-pressed="false" aria-label="Turn lullaby on">
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-sound-off"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-sound-on"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span class="sound-label">Lullaby off</span>
+    </button>
   </header>
 
-  <main>
-    <section class="hero section-wrap" id="home">
-      <div class="hero-copy">
-        <div class="eyebrow"><span class="eyebrow-line"></span> NIGHT SHIFT NO. 001 <span class="eyebrow-line"></span></div>
-        <h1>Somewhere<br>between <em>asleep</em><br>and <em>stardust.</em></h1>
-        <p class="hero-intro">Meet Pip — Junior Dream Engineer, tiny cloud-dweller, and the one responsible for the lovely little things your dreams are made of.</p>
-        <div class="hero-actions">
-          <a class="button button-dark" href="#dream-engine">Build a little dream <span>↗</span></a>
-          <a class="text-link" href="#story">Meet the dreamer <span>↓</span></a>
+  <main id="main">
+
+    <!-- ===== A. Hero ===== -->
+    <section class="hero" id="dreamworld" aria-labelledby="heroTitle">
+      <div class="sky" aria-hidden="true">
+        <div class="stars" id="heroStars"></div>
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+      </div>
+
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow">A little dream is waiting</p>
+          <h1 id="heroTitle">Somewhere between sleep and starlight, <em>Pip is dreaming.</em></h1>
+          <p class="lede">Pip is a tiny, moon-loving dreamer who collects the dreams everybody forgot and tucks them into a nursery made of night. Tiptoe in, the nightlight is on.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#meet">Enter Pip's Dreamworld</a>
+            <a class="btn btn-ghost" href="#story">Discover Pip's little universe</a>
+          </div>
         </div>
-        <div class="hero-footnote"><span class="status-pulse"></span> WORKSHOP STATUS: SOFTLY AWAKE <span class="footnote-right">EST. AFTER SUNSET</span></div>
-      </div>
-      <div class="hero-art">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <span class="float-star star-a">✦</span><span class="float-star star-b">✧</span><span class="float-star star-c">✳</span>
-        <span class="tiny-label label-top">DREAM DELIVERY<br>IN PROGRESS</span>
-        <img class="pip-hero" src="assets/pip_avatar_cloud.png" alt="Pip, a cute skull baby in a starry nightcap, waving from a cloud">
-        <button class="hello-sticker" id="pipHello" aria-label="Say hello to Pip"><span>✦</span> tap to say hello</button>
-        <span class="tiny-label label-bottom">CLOUD LEVEL 07<br>MOON SIDE</span>
-        <div class="hero-caption" id="pipMessage" aria-live="polite">Pip is saving you a little stardust.</div>
-      </div>
-      <a class="scroll-cue" href="#story"><span class="scroll-line"></span> SCROLL INTO THE SOFT</a>
-    </section>
 
-    <section class="manifesto section-wrap reveal" id="story">
-      <div class="section-kicker">01 / A SMALL INTRODUCTION</div>
-      <div class="manifesto-grid">
-        <h2>Big dreams<br>come in <em>tiny</em><br>packages.</h2>
-        <div class="manifesto-copy"><p class="large-copy">Pip doesn't sleep through the night. Pip <em>works</em> through it.</p><p>From a cloud tucked behind the moon, Pip designs tiny adventures, tunes lullabies until they feel like a hug, and lights the way home for wandering dreams.</p><p class="signature">“Every sleepyhead deserves a little magic.” <span>— Pip</span></p></div>
-      </div>
-      <div class="story-timeline">
-        <div class="timeline-item"><span class="timeline-num">01</span><span class="timeline-icon">☾</span><div><b>Found a moonbeam</b><p>A little light, a very big idea.</p></div></div>
-        <div class="timeline-item"><span class="timeline-num">02</span><span class="timeline-icon">♫</span><div><b>Learned the language of lullabies</b><p>Turns out quiet has a rhythm.</p></div></div>
-        <div class="timeline-item"><span class="timeline-num">03</span><span class="timeline-icon">✦</span><div><b>Opened the nursery</b><p>One tiny dream at a time.</p></div></div>
-      </div>
-    </section>
-
-    <section class="workshop section-wrap reveal" id="workshop">
-      <div class="section-heading"><div><div class="section-kicker">02 / SELECTED DREAM WORKS</div><h2>Made after <em>moonrise.</em></h2></div><p>Three little inventions from Pip's night shift. Each one has a job to do.</p></div>
-      <div class="project-grid">
-        <button class="project-card card-lantern" data-project="lantern">
-          <div class="project-image"><span class="project-index">OBJECT 001</span><img src="assets/pip_dream_lantern.png" alt="Pip's crescent moon dream lantern"><span class="image-arrow">↗</span></div>
-          <div class="project-meta"><span>GUIDANCE / GLOW</span><span>01 — 03</span></div><h3>The Moonlight Keeper</h3><p>A pocket-sized lighthouse for dreams that take the long way home.</p><span class="open-project">Inspect invention <span>↗</span></span>
-        </button>
-        <button class="project-card card-lullaby" data-project="lullaby">
-          <div class="project-image"><span class="project-index">OBJECT 002</span><img src="assets/pip_lullaby_box.png" alt="Pip's pastel Lullaby Lab music box"><span class="image-arrow">↗</span></div>
-          <div class="project-meta"><span>SOUND / COMFORT</span><span>02 — 03</span></div><h3>The Lullaby Lab</h3><p>A music box tuned to the exact frequency of “everything is okay.”</p><span class="open-project">Inspect invention <span>↗</span></span>
-        </button>
-        <button class="project-card card-cloud" data-project="cloud">
-          <div class="project-image"><span class="project-index">OBJECT 003</span><img src="assets/pip_portrait.png" alt="Portrait of Pip, the Junior Dream Engineer"><span class="image-arrow">↗</span></div>
-          <div class="project-meta"><span>CARE / CURIOSITY</span><span>03 — 03</span></div><h3>The Cloud Concierge</h3><p>A friendly guide for lost thoughts, brave beginnings, and bedtime worries.</p><span class="open-project">Inspect invention <span>↗</span></span>
-        </button>
-      </div>
-      <p class="workshop-note"><span>✳</span> All inventions are handmade, moon-tested, and absolutely not for daytime use.</p>
-    </section>
-
-    <section class="engine-section reveal" id="dream-engine">
-      <div class="engine-inner section-wrap">
-        <div class="section-kicker">03 / THE DREAM ENGINE</div>
-        <div class="engine-grid">
-          <div class="engine-copy"><h2>Let's make<br>something <em>sleepy.</em></h2><p>Every dream begins with a feeling. Pick one. Pip will handle the stardust.</p>
-            <div class="mood-options" role="group" aria-label="Choose a dream feeling">
-              <button class="mood-option active" data-mood="wonder"><span>✧</span><span><b>Wonder</b><small>Something impossible</small></span><span class="mood-check">●</span></button>
-              <button class="mood-option" data-mood="peace"><span>☾</span><span><b>Peace</b><small>A softer place to land</small></span><span class="mood-check">○</span></button>
-              <button class="mood-option" data-mood="adventure"><span>↗</span><span><b>Adventure</b><small>A door to the unknown</small></span><span class="mood-check">○</span></button>
+        <div class="hero-art" data-depth-wrap>
+          <button class="moon" id="moon" data-state="sleepy" aria-label="The friendly moon. Tap it and see what happens">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <circle cx="100" cy="100" r="86" fill="url(#g-gold)"/>
+              <circle cx="66" cy="70" r="12" fill="#F0C873" opacity=".55"/>
+              <circle cx="138" cy="128" r="16" fill="#F0C873" opacity=".5"/>
+              <circle cx="120" cy="60" r="7" fill="#F0C873" opacity=".5"/>
+              <g class="eyes eyes-sleepy"><path d="M66 94q10 8 20 0M114 94q10 8 20 0" fill="none" stroke="#6A5A8E" stroke-width="4" stroke-linecap="round"/></g>
+              <g class="eyes eyes-awake"><ellipse cx="76" cy="94" rx="6" ry="8" fill="#4A4670"/><ellipse cx="124" cy="94" rx="6" ry="8" fill="#4A4670"/><circle cx="78" cy="91" r="2" fill="#fff"/><circle cx="126" cy="91" r="2" fill="#fff"/></g>
+              <ellipse cx="58" cy="116" rx="11" ry="7" fill="#F5C9D5" opacity=".9"/>
+              <ellipse cx="142" cy="116" rx="11" ry="7" fill="#F5C9D5" opacity=".9"/>
+              <path class="mouth mouth-sleepy" d="M90 122q10 6 20 0" fill="none" stroke="#6A5A8E" stroke-width="4" stroke-linecap="round"/>
+              <path class="mouth mouth-happy" d="M84 118q16 22 32 0z" fill="#6A5A8E"/>
+            </svg>
+          </button>
+          <div class="pip-wrap">
+            <div class="art pip-art" data-asset="assets/images/pip.png" data-alt="Pip, a tiny dreamer in a lavender nightcap, holding a golden star">
+              <svg viewBox="0 0 220 260" role="img" aria-label="Pip, a tiny dreamer in a lavender nightcap, holding a golden star"><use href="#i-pip"/></svg>
             </div>
-            <button class="button button-dark generate-button" id="generateDream">Create my dream <span>✦</span></button>
           </div>
-          <div class="dream-output" id="dreamOutput" aria-live="polite">
-            <div class="output-top"><span>LIVE DREAM PREVIEW</span><span class="output-status"><i></i> READY</span></div>
-            <div class="dream-scene" id="dreamScene"><div class="scene-moon">☾</div><div class="scene-cloud cloud-left"></div><div class="scene-cloud cloud-right"></div><div class="scene-stars">✦　·　✧　　✦　·</div><div class="scene-door">✧</div></div>
-            <div class="output-bottom"><div><span class="output-label">YOUR DREAM IS CALLED</span><h3 id="dreamTitle">The Almost-Moon Garden</h3></div><span class="dream-number">DREAM<br>№ 0001</span></div>
-            <p class="dream-description" id="dreamDescription">A little garden where the moon grows flowers that only bloom when you believe in them.</p>
-            <div class="dream-stamp">PIP APPROVED <span>✳</span></div>
+          <p class="hint" aria-hidden="true">Psst. The moon likes company.</p>
+        </div>
+      </div>
+
+      <a class="scroll-cue" href="#meet" aria-label="Scroll to meet Pip"><span></span></a>
+    </section>
+
+    <!-- ===== B. Meet Pip ===== -->
+    <section class="meet" id="meet" aria-labelledby="meetTitle">
+      <div class="wrap meet-grid">
+        <div class="meet-stage reveal">
+          <div class="meet-blob" aria-hidden="true"></div>
+          <div class="art pip-art" data-asset="assets/images/pip-portrait.png" data-alt="Pip smiling in a lavender nightcap">
+            <svg viewBox="0 0 220 260" role="img" aria-label="Pip smiling in a lavender nightcap"><use href="#i-pip"/></svg>
+          </div>
+
+          <button class="tag tag-1" data-fact="fact-ears" aria-expanded="false">Moon-ears</button>
+          <button class="tag tag-2" data-fact="fact-cap" aria-expanded="false">Dream cap</button>
+          <button class="tag tag-3" data-fact="fact-star" aria-expanded="false">Pocket star</button>
+          <button class="tag tag-4" data-fact="fact-tummy" aria-expanded="false">Crescent tummy</button>
+        </div>
+
+        <div class="meet-copy reveal">
+          <p class="eyebrow dark">Meet Pip</p>
+          <h2 id="meetTitle">Small enough to hide in a teacup. Big enough to hold a dream.</h2>
+          <p>Pip is about three moonbeams tall, always sleepy, never quite tired. Pip believes that every forgotten dream is still out there, somewhere, waiting to be found.</p>
+
+          <div class="fact-panel" id="factPanel" aria-live="polite">
+            <p id="factText">Tap a floating label on Pip to learn a secret.</p>
+          </div>
+
+          <ul class="traits">
+            <li><strong>Gentle</strong><span>Whispers to the stars so they don't wake up grumpy.</span></li>
+            <li><strong>Curious</strong><span>Follows drifting sparkles wherever they lead.</span></li>
+            <li><strong>A little shy</strong><span>Hides behind the moon when someone new arrives.</span></li>
+          </ul>
+
+          <div class="favs">
+            <p class="favs-title">Pip's favourite things</p>
+            <div class="favs-row">
+              <div class="fav">
+                <div class="art" data-asset="assets/images/nightlight.png" data-alt="Pip's moon nightlight"><svg viewBox="0 0 200 240" role="img" aria-label="Pip's moon nightlight"><use href="#i-lantern"/></svg></div>
+                <span>The moon nightlight</span>
+              </div>
+              <div class="fav">
+                <div class="art" data-asset="assets/images/music-box.png" data-alt="Pip's unicorn music box"><svg viewBox="0 0 240 220" role="img" aria-label="Pip's unicorn music box"><use href="#i-musicbox"/></svg></div>
+                <span>The unicorn music box</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="closing section-wrap reveal">
-      <button class="secret-moon" id="secretMoon" aria-label="A small moon. Maybe there's a secret.">☾</button>
-      <div class="section-kicker">A NOTE BEFORE YOU GO</div>
-      <h2>Take a little<br><em>stardust</em> with you.</h2>
-      <p>Even the longest night is made of tiny lights.</p>
-      <div class="closing-signature">With moonlight & care,<br><span>Pip ✳</span></div>
-      <div class="secret-message" id="secretMessage" hidden>YOU FOUND THE 3:17 AM SECRET.<br><span>Pip saved the very best dream for you. You are someone's favourite kind of magic. ✦</span></div>
-      <a class="back-top" href="#home">BACK TO THE TOP ↑</a>
+    <!-- ===== C. Story ===== -->
+    <section class="story" id="story" aria-labelledby="storyTitle">
+      <div class="story-head wrap">
+        <p class="eyebrow">Pip's story</p>
+        <h2 id="storyTitle">How the nursery began</h2>
+        <p class="story-sub">Four little scenes. Scroll at any speed you like.</p>
+      </div>
+
+      <ol class="progress" id="storyProgress" aria-label="Story progress">
+        <li class="on"><span class="sr-only">Scene 1</span></li>
+        <li><span class="sr-only">Scene 2</span></li>
+        <li><span class="sr-only">Scene 3</span></li>
+        <li><span class="sr-only">Scene 4</span></li>
+      </ol>
+
+      <article class="scene scene-1" data-scene="0">
+        <div class="wrap scene-grid">
+          <div class="scene-art reveal"><svg viewBox="0 0 240 260" role="img" aria-label="A window at night with one tiny glowing star outside"><use href="#i-window"/></svg></div>
+          <div class="scene-text reveal">
+            <span class="scene-no">One</span>
+            <h3>A tiny star outside the window</h3>
+            <p>One quiet night, Pip noticed a star no bigger than a button, glowing right outside the nursery window. It blinked, just once, as if to say hello.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="scene scene-2" data-scene="1">
+        <div class="wrap scene-grid flip">
+          <div class="scene-art reveal"><svg viewBox="0 0 260 220" role="img" aria-label="Glass jars each holding a glowing forgotten dream"><use href="#i-jars"/></svg></div>
+          <div class="scene-text reveal">
+            <span class="scene-no">Two</span>
+            <h3>The jar of forgotten dreams</h3>
+            <p>The star led Pip to a hidden shelf of glass jars. Each one held a dream someone had forgotten by morning, still glowing, still hoping to be remembered.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="scene scene-3" data-scene="2">
+        <div class="wrap scene-grid">
+          <div class="scene-art reveal"><svg viewBox="0 0 280 200" role="img" aria-label="A cosy nursery bed with a lantern and floating stars"><use href="#i-bed"/></svg></div>
+          <div class="scene-text reveal">
+            <span class="scene-no">Three</span>
+            <h3>A nursery for lost dreams</h3>
+            <p>So Pip built a nursery of lantern light, cloud pillows and music-box lullabies, a cosy place where every forgotten dream could be rediscovered and loved again.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="scene scene-4" data-scene="3">
+        <div class="wrap scene-grid flip">
+          <div class="scene-art reveal">
+            <div class="art pip-art" data-asset="assets/images/pip-waving.png" data-alt="Pip waving, holding out a golden star"><svg viewBox="0 0 220 260" role="img" aria-label="Pip waving, holding out a golden star"><use href="#i-pip"/></svg></div>
+          </div>
+          <div class="scene-text reveal">
+            <span class="scene-no">Four</span>
+            <h3>Help Pip choose the next dream</h3>
+            <p>Now Pip has one wish: to share the nursery. Pick a mood, a friend and a faraway place, and Pip will dream something just for you.</p>
+            <a class="btn btn-primary" href="#engine" data-enter-engine>Open the Dream Engine</a>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- ===== D. Creations ===== -->
+    <section class="creations" id="creations" aria-labelledby="creationsTitle">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow dark">What Pip makes</p>
+          <h2 id="creationsTitle">Three small wonders from the nursery workshop</h2>
+          <p>Tap a creation to open its story.</p>
+        </div>
+
+        <div class="creation-list">
+          <button class="creation c-lantern reveal" data-project="lantern" aria-haspopup="dialog">
+            <div class="creation-art art" data-asset="assets/images/nightlight.png" data-alt="Moonlight Lantern"><svg viewBox="0 0 200 240" role="img" aria-label="Moonlight Lantern"><use href="#i-lantern"/></svg></div>
+            <div class="creation-text">
+              <span class="creation-no">No. 1</span>
+              <h3>Moonlight Lantern</h3>
+              <p>Turns dark corners into tiny constellations.</p>
+              <span class="more">Open its story</span>
+            </div>
+          </button>
+
+          <button class="creation c-box reveal" data-project="box" aria-haspopup="dialog">
+            <div class="creation-art art" data-asset="assets/images/music-box.png" data-alt="The Unicorn Dreambox"><svg viewBox="0 0 240 220" role="img" aria-label="The Unicorn Dreambox"><use href="#i-musicbox"/></svg></div>
+            <div class="creation-text">
+              <span class="creation-no">No. 2</span>
+              <h3>The Unicorn Dreambox</h3>
+              <p>A music box that keeps the happiest dreams safe.</p>
+              <span class="more">Open its story</span>
+            </div>
+          </button>
+
+          <button class="creation c-pillow reveal" data-project="pillow" aria-haspopup="dialog">
+            <div class="creation-art art" data-asset="assets/images/cloud-pillow.png" data-alt="Cloud Pillow No. 7"><svg viewBox="0 0 240 200" role="img" aria-label="Cloud Pillow No. 7"><use href="#i-pillow"/></svg></div>
+            <div class="creation-text">
+              <span class="creation-no">No. 7</span>
+              <h3>Cloud Pillow No. 7</h3>
+              <p>Grows a brand new dream landscape every night.</p>
+              <span class="more">Open its story</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== E. Dream Engine ===== -->
+    <section class="engine" id="engine" data-mood="peaceful" aria-labelledby="engineTitle">
+      <div class="engine-sky" aria-hidden="true"><div class="stars" id="engineStars"></div></div>
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">The signature feature</p>
+          <h2 id="engineTitle">The Dream Engine</h2>
+          <p>Choose three things. Pip will dream the rest.</p>
+        </div>
+
+        <div class="engine-grid">
+          <form class="engine-form reveal" id="dreamForm" novalidate>
+            <fieldset>
+              <legend>1. Pick a mood</legend>
+              <div class="chips">
+                <label class="chip"><input type="radio" name="mood" value="peaceful" checked><span>Peaceful</span></label>
+                <label class="chip"><input type="radio" name="mood" value="adventurous"><span>Adventurous</span></label>
+                <label class="chip"><input type="radio" name="mood" value="mysterious"><span>Mysterious</span></label>
+                <label class="chip"><input type="radio" name="mood" value="magical"><span>Magical</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>2. Pick a companion</legend>
+              <div class="chips">
+                <label class="chip"><input type="radio" name="companion" value="moon" checked><span>Moon</span></label>
+                <label class="chip"><input type="radio" name="companion" value="unicorn"><span>Unicorn</span></label>
+                <label class="chip"><input type="radio" name="companion" value="cloud"><span>Cloud</span></label>
+                <label class="chip"><input type="radio" name="companion" value="star"><span>Star</span></label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>3. Pick a destination</legend>
+              <div class="chips">
+                <label class="chip"><input type="radio" name="destination" value="cloud" checked><span>Cloud kingdom</span></label>
+                <label class="chip"><input type="radio" name="destination" value="forest"><span>Starlight forest</span></label>
+                <label class="chip"><input type="radio" name="destination" value="garden"><span>Moon garden</span></label>
+                <label class="chip"><input type="radio" name="destination" value="planet"><span>Candy-coloured planet</span></label>
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-big" id="createBtn">Create My Dream</button>
+              <button type="button" class="btn btn-ghost-dark" id="surpriseBtn">Surprise me</button>
+            </div>
+          </form>
+
+          <div class="engine-result reveal">
+            <div class="particles" id="particles" aria-hidden="true"></div>
+
+            <div class="dream-placeholder" id="dreamPlaceholder">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
+              <p>Your dream will appear here.</p>
+            </div>
+
+            <article class="dream-card" id="dreamCard" hidden aria-live="polite" tabindex="-1">
+              <div class="dream-motif" id="dreamMotif" aria-hidden="true"></div>
+              <p class="dream-tags" id="dreamTags"></p>
+              <h3 id="dreamTitle"></h3>
+              <p class="dream-story" id="dreamStory"></p>
+              <div class="dream-buttons">
+                <button type="button" class="btn btn-card" id="againBtn">Dream again</button>
+                <button type="button" class="btn btn-card" id="copyBtn">Copy my dream</button>
+              </div>
+              <p class="copy-status" id="copyStatus" role="status"></p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== H. Final scene ===== -->
+    <section class="goodbye" id="goodbye" aria-labelledby="goodbyeTitle">
+      <div class="goodbye-sky" aria-hidden="true"><div class="stars" id="endStars"></div></div>
+      <div class="wrap goodbye-inner reveal">
+        <div class="goodbye-pip" aria-hidden="true">
+          <div class="art pip-art" data-asset="assets/images/pip-sleeping.png" data-alt="">
+            <svg viewBox="0 0 220 260"><use href="#i-pip"/></svg>
+          </div>
+          <span class="zzz z1">z</span><span class="zzz z2">z</span><span class="zzz z3">z</span>
+        </div>
+        <p class="eyebrow">The last page</p>
+        <h2 id="goodbyeTitle">The end of tonight's story.</h2>
+        <blockquote class="pip-quote">“Every dream you forget, I will keep warm for you.”<cite>Pip</cite></blockquote>
+        <div class="hero-actions center">
+          <a class="btn btn-primary" href="#engine" data-enter-engine>Dream another dream</a>
+          <a class="btn btn-ghost" href="#dreamworld">Return to the nursery</a>
+        </div>
+        <p class="colophon">Made with moonlight, one hackathon and a lot of sleepy stars. Goodnight.</p>
+      </div>
     </section>
   </main>
 
-  <footer class="footer"><span>© PIP'S MIDNIGHT NURSERY</span><span>DESIGNED BETWEEN TWO YAWNS</span><span>✳ MADE WITH A LITTLE MAGIC</span></footer>
+  <!-- ===== Overlays ===== -->
+  <div class="portal" id="portal" aria-hidden="true"><div class="portal-ring"></div></div>
+  <div class="cursor-star" id="cursorStar" aria-hidden="true"></div>
+  <div class="burst-layer" id="burstLayer" aria-hidden="true"></div>
 
-  <dialog id="projectDialog" class="project-dialog">
-    <button class="dialog-close" id="dialogClose" aria-label="Close project details">×</button>
-    <div class="dialog-art"><img id="dialogImage" src="assets/pip_dream_lantern.png" alt=""></div>
-    <div class="dialog-copy"><div class="section-kicker" id="dialogKicker">OBJECT 001 / GUIDANCE</div><h2 id="dialogTitle">The Moonlight Keeper</h2><p id="dialogDescription"></p><div class="dialog-note" id="dialogNote"></div></div>
+  <!-- Project modal -->
+  <dialog class="modal" id="projectModal" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-art" id="modalArt"></div>
+      <div class="modal-text">
+        <p class="creation-no" id="modalNo"></p>
+        <h3 id="modalTitle"></h3>
+        <p id="modalStory"></p>
+        <div class="modal-play">
+          <p class="play-label" id="playLabel"></p>
+          <button class="btn btn-card" id="playBtn"></button>
+          <p class="play-result" id="playResult" role="status"></p>
+        </div>
+      </div>
+    </div>
   </dialog>
+
+  <!-- Easter egg modal -->
+  <dialog class="modal secret" id="secretModal" aria-labelledby="secretTitle">
+    <button class="modal-close" id="secretClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <div class="secret-body">
+      <svg class="secret-star" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
+      <h3 id="secretTitle">You woke the moon!</h3>
+      <p>Shh. You found Pip's secret. The moon is not really sleepy at all. It only pretends, so that Pip can have the night all to itself.</p>
+      <p class="secret-note">Pip says: “Thank you for being curious. Curious people are my favourite kind.”</p>
+      <button class="btn btn-card" id="secretLullaby">Hum a little lullaby</button>
+    </div>
+  </dialog>
+
+  <noscript><p class="noscript">Pip's nursery uses a little JavaScript to come alive. Please turn it on and come back.</p></noscript>
+
+  <script src="script.js"></script>
 </body>
 </html>

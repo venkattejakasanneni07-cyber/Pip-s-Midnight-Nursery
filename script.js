@@ -1,188 +1,601 @@
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+/* ==========================================================
+   Pip's Midnight Nursery - script.js
+   Sections:
+   1. Helpers            2. Stars + optional official artwork
+   3. Header + nav       4. Reveal + story progress
+   5. Hero immersion     6. Moon + Easter egg
+   7. Fact tags          8. Creations modals
+   9. Dream Engine      10. Audio (lullaby)
+  11. Portal transition
+   Everything runs in the browser. No internet needed after load.
+   ========================================================== */
+(function () {
+  'use strict';
 
-// Pip says hello when visitors tap the character.
-const pipMessages = [
-  "Pip is saving you a little stardust.",
-  "Oh! A visitor. I've polished the moon just for you.",
-  "Tiny reminder: you're made of the same stuff as stars.",
-  "Shhh... the dreams are almost ready."
-];
-let helloIndex = 0;
-$("#pipHello").addEventListener("click", () => {
-  helloIndex = (helloIndex + 1) % pipMessages.length;
-  $("#pipMessage").textContent = pipMessages[helloIndex];
-  $("#pipHello").classList.add("hello-pop");
-  setTimeout(() => $("#pipHello").classList.remove("hello-pop"), 350);
-});
+  document.documentElement.classList.add('js');
 
-// A gentle generated chime, only after the visitor explicitly enables sound.
-let audioContext = null;
-let soundEnabled = false;
-function chime() {
-  if (!soundEnabled) return;
-  try {
-    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-    const now = audioContext.currentTime;
-    [523.25, 659.25, 783.99].forEach((frequency, i) => {
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, now + i * 0.12);
-      gain.gain.exponentialRampToValueAtTime(0.07, now + i * 0.12 + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.12 + 0.55);
-      oscillator.connect(gain);
-      gain.connect(audioContext.destination);
-      oscillator.start(now + i * 0.12);
-      oscillator.stop(now + i * 0.12 + 0.6);
-    });
-  } catch (error) {
-    console.info("Audio is not available in this browser.", error);
-  }
-}
-$("#soundToggle").addEventListener("click", async () => {
-  soundEnabled = !soundEnabled;
-  $("#soundToggle").setAttribute("aria-pressed", String(soundEnabled));
-  $("#soundLabel").textContent = soundEnabled ? "Sound on" : "Sound off";
-  if (soundEnabled) {
-    chime();
-  } else if (audioContext) {
-    await audioContext.suspend();
-  }
-});
+  /* ---------- 1. Helpers ---------- */
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  var $$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  var rand = function (min, max) { return Math.random() * (max - min) + min; };
+  var pick = function (arr) { return arr[Math.floor(Math.random() * arr.length)]; };
+  var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
 
-// Project cards open real detail dialogs.
-const projects = {
-  lantern: {
-    image: "assets/pip_dream_lantern.png",
-    alt: "Pip's crescent moon dream lantern",
-    kicker: "OBJECT 001 / GUIDANCE",
-    title: "The Moonlight Keeper",
-    description: "Some dreams wander a little too far from home. Pip built this lantern to leave a trail of warm moonlight wherever a dream might go. Tap the little glow, take a breath, and imagine your own way home.",
-    note: "FIELD NOTE: Best used when the night feels bigger than you do. Light level: one brave thought."
-  },
-  lullaby: {
-    image: "assets/pip_lullaby_box.png",
-    alt: "Pip's Lullaby Lab music box",
-    kicker: "OBJECT 002 / COMFORT",
-    title: "The Lullaby Lab",
-    description: "A tiny music box that turns the noise of a long day into a softer melody. Pip tests every tune on a very sleepy cloud before it is cleared for delivery.",
-    note: "FIELD NOTE: Winding key clockwise adds courage. One full turn equals three deep breaths."
-  },
-  cloud: {
-    image: "assets/pip_portrait.png",
-    alt: "Portrait of Pip the Junior Dream Engineer",
-    kicker: "OBJECT 003 / CARE",
-    title: "The Cloud Concierge",
-    description: "Pip's most important invention might be Pipself: a small guide for lost thoughts, bedtime worries, and anyone who needs a reminder that even the dark can be gentle.",
-    note: "FIELD NOTE: Open every night. Accepts worries of all sizes. No worry is too tiny."
+  /* ---------- 2. Stars + optional official artwork ---------- */
+  function makeStars(container, count) {
+    if (!container) return;
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < count; i++) {
+      var s = document.createElement('span');
+      s.className = 'star';
+      var size = rand(1.5, 3.6);
+      s.style.cssText = 'left:' + rand(0, 100) + '%;top:' + rand(0, 100) + '%;width:' + size + 'px;height:' + size + 'px;' +
+        '--dur:' + rand(3, 7) + 's;--delay:' + rand(0, 5) + 's';
+      frag.appendChild(s);
+    }
+    container.appendChild(frag);
   }
-};
-const dialog = $("#projectDialog");
-$$(".project-card").forEach(card => {
-  card.addEventListener("click", () => {
-    const project = projects[card.dataset.project];
-    $("#dialogImage").src = project.image;
-    $("#dialogImage").alt = project.alt;
-    $("#dialogKicker").textContent = project.kicker;
-    $("#dialogTitle").textContent = project.title;
-    $("#dialogDescription").textContent = project.description;
-    $("#dialogNote").textContent = project.note;
-    dialog.showModal();
-    chime();
+  var starCount = window.innerWidth < 700 ? 45 : 90;
+  makeStars($('#heroStars'), starCount);
+  makeStars($('#engineStars'), 50);
+  makeStars($('#endStars'), 60);
+
+  /* If a real file exists at data-asset, swap the built-in drawing for it.
+     If the file is missing, nothing happens and the drawing stays. */
+  $$('.art[data-asset]').forEach(function (box) {
+    var src = box.getAttribute('data-asset');
+    var img = new Image();
+    img.onload = function () {
+      img.alt = box.getAttribute('data-alt') || '';
+      img.decoding = 'async';
+      box.innerHTML = '';
+      box.appendChild(img);
+    };
+    img.onerror = function () { /* keep the SVG placeholder */ };
+    img.src = src;
   });
-});
-$("#dialogClose").addEventListener("click", () => dialog.close());
-dialog.addEventListener("click", event => {
-  if (event.target === dialog) dialog.close();
-});
 
-// Dream engine: the selected mood changes the title, copy and scene palette.
-const dreams = {
-  wonder: {
-    title: "The Almost-Moon Garden",
-    description: "A little garden where the moon grows flowers that only bloom when you believe in them.",
-    palette: "wonder",
-    stamp: "PIP APPROVED"
-  },
-  peace: {
-    title: "The Quiet Between Waves",
-    description: "A sleepy island drifts on a lavender sea. Every wave carries one worry away, until all that remains is the sound of being safe.",
-    palette: "peace",
-    stamp: "SOFTLY SAFE"
-  },
-  adventure: {
-    title: "The Door at Cloud's End",
-    description: "A tiny golden door appears at the edge of the sky. Beyond it: floating forests, friendly comets, and a map that draws itself as you go.",
-    palette: "adventure",
-    stamp: "BRAVE DREAM"
+  /* ---------- 3. Header + nav ---------- */
+  var header = $('.site-header');
+  var nav = $('#siteNav');
+  var navToggle = $('#navToggle');
+
+  function onScroll() { header.classList.toggle('solid', window.scrollY > 40); }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  function setNav(open) {
+    nav.classList.toggle('open', open);
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
   }
-};
-let selectedMood = "wonder";
-$$(".mood-option").forEach(button => {
-  button.addEventListener("click", () => {
-    selectedMood = button.dataset.mood;
-    $$(".mood-option").forEach(option => {
-      const active = option === button;
-      option.classList.toggle("active", active);
-      option.querySelector(".mood-check").textContent = active ? "●" : "○";
+  navToggle.addEventListener('click', function () { setNav(!nav.classList.contains('open')); });
+  $$('a', nav).forEach(function (a) { a.addEventListener('click', function () { setNav(false); }); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && nav.classList.contains('open')) { setNav(false); navToggle.focus(); }
+  });
+
+  /* ---------- 4. Reveal + story progress ---------- */
+  var revealEls = $$('.reveal');
+  if ('IntersectionObserver' in window) {
+    var revealObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); revealObs.unobserve(en.target); }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach(function (el) { revealObs.observe(el); });
+
+    var scenes = $$('.scene');
+    var dots = $$('#storyProgress li');
+    var progress = $('#storyProgress');
+    var sceneObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          var idx = Number(en.target.getAttribute('data-scene'));
+          dots.forEach(function (d, i) { d.classList.toggle('on', i === idx); });
+        }
+      });
+    }, { threshold: 0.5 });
+    scenes.forEach(function (s) { sceneObs.observe(s); });
+    var storyObs = new IntersectionObserver(function (entries) {
+      progress.classList.toggle('show', entries[0].isIntersecting);
+    }, { threshold: 0.05 });
+    storyObs.observe($('#story'));
+  } else {
+    revealEls.forEach(function (el) { el.classList.add('in'); });
+  }
+
+  /* ---------- 5. Hero immersion: parallax, cursor star, tap sparkles ---------- */
+  var hero = $('.hero');
+  var moon = $('#moon');
+  var pipWrap = $('.pip-wrap');
+  var clouds = $$('.cloud');
+
+  if (!reduceMotion && hero) {
+    hero.addEventListener('pointermove', function (e) {
+      var r = hero.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      if (moon) moon.style.translate = (x * -34) + 'px ' + (y * -24) + 'px';
+      if (pipWrap) pipWrap.style.translate = (x * 22) + 'px ' + (y * 14) + 'px';
+      clouds.forEach(function (c, i) { c.style.marginTop = (y * (10 + i * 8)) + 'px'; });
+    }, { passive: true });
+  }
+
+  /* A little star follows the mouse (desktop only) */
+  var cursorStar = $('#cursorStar');
+  if (cursorStar && finePointer && !reduceMotion) {
+    var cx = 0, cy = 0, tx = 0, ty = 0, running = false;
+    document.addEventListener('pointermove', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX; ty = e.clientY;
+      cursorStar.classList.add('on');
+      if (!running) { running = true; requestAnimationFrame(follow); }
+    }, { passive: true });
+    document.addEventListener('mouseleave', function () { cursorStar.classList.remove('on'); });
+    var follow = function () {
+      cx += (tx - cx) * 0.14; cy += (ty - cy) * 0.14;
+      cursorStar.style.transform = 'translate(' + (cx - 11) + 'px,' + (cy - 11) + 'px)';
+      if (Math.abs(tx - cx) > 0.3 || Math.abs(ty - cy) > 0.3) requestAnimationFrame(follow);
+      else running = false;
+    };
+  }
+
+  /* Stars burst where you click or tap */
+  var burstLayer = $('#burstLayer');
+  document.addEventListener('pointerdown', function (e) {
+    if (reduceMotion || !burstLayer) return;
+    if (e.target.closest('dialog, input, label, textarea')) return;
+    if (burstLayer.childElementCount > 40) return;
+    for (var i = 0; i < 6; i++) {
+      var b = document.createElement('span');
+      b.className = 'burst';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      var ang = rand(0, Math.PI * 2), dist = rand(26, 70);
+      b.style.setProperty('--bx', Math.cos(ang) * dist + 'px');
+      b.style.setProperty('--by', Math.sin(ang) * dist + 'px');
+      b.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>';
+      burstLayer.appendChild(b);
+      (function (node) { setTimeout(function () { node.remove(); }, 950); })(b);
+    }
+  }, { passive: true });
+
+  /* ---------- Dialog helpers (used by creations + Easter egg) ---------- */
+  var lastOpener = null;
+  function openDialog(dlg, opener) {
+    lastOpener = opener || document.activeElement;
+    if (typeof dlg.showModal === 'function') { if (!dlg.open) dlg.showModal(); }
+    else { dlg.setAttribute('open', ''); }
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDialog(dlg) {
+    if (typeof dlg.close === 'function') { if (dlg.open) dlg.close(); }
+    else { dlg.removeAttribute('open'); }
+  }
+  function wireDialog(dlg, closeBtn) {
+    closeBtn.addEventListener('click', function () { closeDialog(dlg); });
+    dlg.addEventListener('click', function (e) { if (e.target === dlg) closeDialog(dlg); });   /* click outside */
+    dlg.addEventListener('close', function () {
+      document.body.style.overflow = '';
+      if (lastOpener && lastOpener.focus) lastOpener.focus();
+    });
+    dlg.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeDialog(dlg); }); /* fallback for old browsers */
+  }
+
+  /* ---------- 6. Moon + Easter egg ---------- */
+  var secretModal = $('#secretModal');
+  wireDialog(secretModal, $('#secretClose'));
+  var moonClicks = 0, moonTimer = null, calmTimer = null;
+
+  function moonState(s) { moon.setAttribute('data-state', s); }
+  function calmMoon() { clearTimeout(calmTimer); calmTimer = setTimeout(function () { moonState('sleepy'); }, 1600); }
+  moon.addEventListener('pointerenter', function () { moonState('awake'); });
+  moon.addEventListener('pointerleave', calmMoon);
+  moon.addEventListener('focus', function () { moonState('awake'); });
+  moon.addEventListener('blur', calmMoon);
+
+  moon.addEventListener('click', function () {
+    moonClicks++;
+    moonState('giggle');
+    calmMoon();
+    clearTimeout(moonTimer);
+    moonTimer = setTimeout(function () { moonClicks = 0; }, 2600);   /* clicks must be fairly close together */
+    if (moonClicks >= 3) {
+      moonClicks = 0;
+      rainStars();
+      openDialog(secretModal, moon);
+    }
+  });
+
+  function rainStars() {
+    if (reduceMotion || !burstLayer) return;
+    for (var i = 0; i < 18; i++) {
+      (function (n) {
+        setTimeout(function () {
+          var b = document.createElement('span');
+          b.className = 'burst';
+          b.style.left = rand(5, 95) + 'vw';
+          b.style.top = rand(5, 40) + 'vh';
+          b.style.setProperty('--bx', rand(-30, 30) + 'px');
+          b.style.setProperty('--by', rand(60, 220) + 'px');
+          b.innerHTML = '<svg viewBox="0 0 24 24"><use href="#i-star"/></svg>';
+          burstLayer.appendChild(b);
+          setTimeout(function () { b.remove(); }, 950);
+        }, n * 60);
+      })(i);
+    }
+  }
+
+  $('#secretLullaby').addEventListener('click', function () {
+    audio.setOn(true);
+    this.textContent = 'Humming softly...';
+  });
+
+  /* ---------- 7. Fact tags on Pip ---------- */
+  var facts = {
+    'fact-ears': 'Pip\'s ears are shaped like tiny crescent moons, and they twitch whenever somebody, somewhere, starts to dream.',
+    'fact-cap': 'The lavender nightcap holds Pip\'s favourite dreams. If you listen closely, it hums.',
+    'fact-star': 'The star in Pip\'s pocket is the very first one Pip ever found. It glows brighter when Pip is happy.',
+    'fact-tummy': 'The golden crescent on Pip\'s tummy is a piece of moonlight that Pip kept after a very long night.'
+  };
+  var factText = $('#factText');
+  var tags = $$('.tag');
+  tags.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tags.forEach(function (o) { o.setAttribute('aria-expanded', 'false'); });
+      t.setAttribute('aria-expanded', 'true');
+      factText.textContent = facts[t.getAttribute('data-fact')];
     });
   });
-});
-$("#generateDream").addEventListener("click", () => {
-  const dream = dreams[selectedMood];
-  $("#dreamTitle").textContent = dream.title;
-  $("#dreamDescription").textContent = dream.description;
-  $(".dream-stamp").innerHTML = `${dream.stamp} <span>✳</span>`;
-  const scene = $("#dreamScene");
-  scene.classList.remove("scene-wonder", "scene-peace", "scene-adventure");
-  scene.classList.add(`scene-${dream.palette}`);
-  scene.animate(
-    [{ opacity: .45, transform: "scale(.985)" }, { opacity: 1, transform: "scale(1)" }],
-    { duration: 550, easing: "ease-out" }
-  );
-  $(".output-status").innerHTML = "<i></i> DREAM CREATED";
-  chime();
-});
 
-// The hidden 3:17 AM secret. Find the moon near the closing note.
-$("#secretMoon").addEventListener("click", () => {
-  const message = $("#secretMessage");
-  message.hidden = !message.hidden;
-  $("#secretMoon").textContent = message.hidden ? "☾" : "✦";
-  if (!message.hidden) {
-    message.scrollIntoView({ behavior: "smooth", block: "center" });
-    chime();
-  }
-});
+  /* ---------- 8. Creations modals ---------- */
+  var projectModal = $('#projectModal');
+  wireDialog(projectModal, $('#modalClose'));
+  var modalArt = $('#modalArt'), playBtn = $('#playBtn'), playResult = $('#playResult');
 
-// Scroll reveal, with a fallback for browsers without IntersectionObserver.
-const revealItems = $$(".reveal");
-if ("IntersectionObserver" in window) {
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-        observer.unobserve(entry.target);
+  var constellations = ['The Sleepy Fox', 'The Little Teacup', 'The Whispering Owl', 'The Drowsy Kite', 'The Cosy Whale'];
+  var happyDreams = ['a picnic on a warm cloud', 'dancing with fireflies', 'a birthday party for the moon', 'flying over a sea of marshmallows', 'a hug that lasted all night'];
+  var landscapes = ['The Marshmallow Meadows', 'Lavender Lake at Dusk', 'The Whispering Cloud Hills', 'Starfruit Orchard', 'The Sleepy Sugar Dunes'];
+
+  var projects = {
+    lantern: {
+      no: 'Creation No. 1', title: 'Moonlight Lantern', bg: '#FFF3CF', btn: 'Light the lantern',
+      story: 'Pip made the Moonlight Lantern from a jar, a thimble of moonlight and one very patient firefly. When it glows, shadows in the corner shyly turn into constellations, so nothing in the dark is ever scary, only sparkly.',
+      label: 'Try it: light the lantern and see which constellation appears.',
+      source: '#creations .c-lantern .creation-art',
+      play: function () {
+        modalArt.classList.add('glow-on');
+        sprinkle(modalArt, 9);
+        return 'A new constellation appears: ' + pick(constellations) + '.';
       }
-    });
-  }, { threshold: 0.12 });
-  revealItems.forEach(item => observer.observe(item));
-} else {
-  revealItems.forEach(item => item.classList.add("visible"));
-}
+    },
+    box: {
+      no: 'Creation No. 2', title: 'The Unicorn Dreambox', bg: '#FBDDE6', btn: 'Wind the music box',
+      story: 'Inside the Dreambox lives a unicorn who dances whenever the key is turned. Each melody is one of the happiest dreams ever dreamed, kept safe so it can never fade.',
+      label: 'Try it: wind the key and open a happy dream.',
+      source: '#creations .c-box .creation-art',
+      play: function () {
+        var played = audio.playPhrase();
+        sprinkle(modalArt, 6);
+        return 'A happy dream floats out: ' + pick(happyDreams) + '.' + (played ? '' : ' (Your device is keeping the music quiet.)');
+      }
+    },
+    pillow: {
+      no: 'Creation No. 7', title: 'Cloud Pillow No. 7', bg: '#E8DDF8', btn: 'Fluff the pillow',
+      story: 'Cloud Pillow No. 7 is stitched from the softest cloud edges. Each time someone rests their head on it, it grows a whole new dream landscape, and no two nights are ever the same.',
+      label: 'Try it: fluff the pillow to grow tonight\'s dream landscape.',
+      source: '#creations .c-pillow .creation-art',
+      play: function () {
+        var hues = ['#E8DDF8', '#FBDDE6', '#DCEBFA', '#FFF3CF', '#DDF3E6'];
+        modalArt.style.setProperty('--modal-bg', pick(hues));
+        modalArt.parentNode.style.setProperty('--modal-bg', modalArt.style.getPropertyValue('--modal-bg'));
+        sprinkle(modalArt, 7);
+        return 'Tonight\'s landscape: ' + pick(landscapes) + '.';
+      }
+    }
+  };
+  var currentProject = null;
 
-// Tiny pointer response on desktop; disabled on touch screens.
-const heroArt = $(".hero-art");
-if (window.matchMedia("(pointer: fine)").matches) {
-  heroArt.addEventListener("pointermove", event => {
-    const bounds = heroArt.getBoundingClientRect();
-    const x = (event.clientX - bounds.left) / bounds.width - .5;
-    const y = (event.clientY - bounds.top) / bounds.height - .5;
-    $(".pip-hero").style.transform = `translate(${x * 9}px, ${y * 7}px)`;
+  function sprinkle(host, n) {
+    if (reduceMotion) return;
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.className = 'particle';
+      s.style.cssText = 'left:' + rand(10, 90) + '%;top:' + rand(40, 90) + '%;--s:' + rand(5, 10) + 'px;--x:' + rand(-30, 30) + 'px;--d:' + rand(1.1, 1.9) + 's;--c:' + pick(['#F5D58A', '#FFF7ED', '#F5C9D5']);
+      host.appendChild(s);
+      (function (node) { setTimeout(function () { node.remove(); }, 2000); })(s);
+    }
+  }
+
+  $$('.creation').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var key = card.getAttribute('data-project');
+      var p = projects[key];
+      currentProject = p;
+      $('#modalNo').textContent = p.no;
+      $('#modalTitle').textContent = p.title;
+      $('#modalStory').textContent = p.story;
+      $('#playLabel').textContent = p.label;
+      playBtn.textContent = p.btn;
+      playResult.textContent = '';
+      modalArt.classList.remove('glow-on');
+      modalArt.style.position = 'relative';
+      modalArt.style.setProperty('--modal-bg', p.bg);
+      modalArt.innerHTML = '';
+      var src = $(p.source);
+      var clone = src.cloneNode(true);
+      clone.removeAttribute('data-asset');
+      modalArt.appendChild(clone);
+      openDialog(projectModal, card);
+    });
   });
-  heroArt.addEventListener("pointerleave", () => {
-    $(".pip-hero").style.transform = "";
+  playBtn.addEventListener('click', function () {
+    if (currentProject) playResult.textContent = currentProject.play();
   });
-}
+
+  /* ---------- 9. Dream Engine ---------- */
+  var moods = {
+    peaceful: {
+      label: 'Peaceful', adj: ['Hushed', 'Sleepy'],
+      open: 'Everything moves slowly here, as if the whole world were breathing in time with you.',
+      lead: 'drifts beside you, slow and unhurried, all the way to',
+      end: ['You settle into the quiet like a feather finding its pillow.', 'The last thing you hear is your own gentle breathing, and it sounds like a lullaby.'],
+      colors: { a: '#DCE6F7', b: '#D8C9F0', ink: '#252642' },
+      motif: '<svg viewBox="0 0 48 48"><path d="M30 5a18 18 0 1 0 0 34a14 14 0 0 1 0-34z" fill="currentColor"/><path d="M6 45q9-5 18 0t18 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+    },
+    adventurous: {
+      label: 'Adventurous', adj: ['Daring', 'Wild-Hearted'],
+      open: 'Your heart does a little leap, because every direction looks like the start of a brave idea.',
+      lead: 'races ahead of you, laughing, all the way to',
+      end: ['You wake with stardust on your sleeves and a map to somewhere new.', 'You tuck the whole adventure into your pocket for tomorrow.'],
+      colors: { a: '#FFE1B8', b: '#F5C9D5', ink: '#3A2433' },
+      motif: '<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 9l6 15-6 15-6-15z" fill="currentColor"/><circle cx="24" cy="24" r="3" fill="#fff"/></svg>'
+    },
+    mysterious: {
+      label: 'Mysterious', adj: ['Whispering', 'Secret'],
+      open: 'Silvery fog curls around your ankles, and somewhere nearby a door you cannot see clicks open.',
+      lead: 'tiptoes ahead of you, finger to lips, all the way to',
+      end: ['You never learn the whole secret, but you wake up smiling, sure that it knows you.', 'The mystery folds itself into a small glowing question that you get to keep.'],
+      colors: { a: '#3D3A6E', b: '#252642', ink: '#FFF7ED' },
+      motif: '<svg viewBox="0 0 48 48"><circle cx="24" cy="18" r="9" fill="currentColor"/><path d="M19 26h10l5 17H14z" fill="currentColor"/><circle cx="24" cy="18" r="3" fill="#252642"/></svg>'
+    },
+    magical: {
+      label: 'Magical', adj: ['Shimmering', 'Sparkling'],
+      open: 'The air fizzes with glitter, and every wish you have ever made floats past like a tiny lantern.',
+      lead: 'swirls around you in ribbons of glitter, all the way to',
+      end: ['Your wishes settle on your pillow like warm, glittering snow.', 'You wake up with sparkles in your hair, and nobody can quite explain why.'],
+      colors: { a: '#F5C9D5', b: '#F5D58A', ink: '#3A2433' },
+      motif: '<svg viewBox="0 0 48 48"><path d="M24 3l4 14 14 4-14 4-4 14-4-14-14-4 14-4z" fill="currentColor"/><path d="M39 30l1.8 5.2L46 37l-5.2 1.8L39 44l-1.8-5.2L32 37l5.2-1.8z" fill="currentColor"/></svg>'
+    }
+  };
+  var companions = {
+    moon: { label: 'Moon', title: 'the Sleepy Moon', short: 'The Moon', meet: 'The Moon leans down, round and gentle, and offers you a ride on its silver curve.', gift: 'a pocketful of moonlight' },
+    unicorn: { label: 'Unicorn', title: 'the Music-Box Unicorn', short: 'The little unicorn', meet: 'A tiny unicorn trots out of the shadows, its mane chiming softly like a music box.', gift: 'one silver note that never fades' },
+    cloud: { label: 'Cloud', title: 'the Pillow Cloud', short: 'The cloud', meet: 'A round cloud drifts up and politely rearranges itself into the comfiest seat you have ever sat on.', gift: 'a blanket of sky-blue fluff' },
+    star: { label: 'Star', title: 'the Wandering Star', short: 'The star', meet: 'A small star tumbles toward you, spinning with excitement, and decides you are its new best friend.', gift: 'a wish that fits in your hand' }
+  };
+  var destinations = {
+    cloud: { label: 'Cloud kingdom', noun: 'Cloud Kingdom', scene: 'You arrive in the Cloud Kingdom, where towers of whipped cream cloud rise around you with rainbow bridges stitched between them.', landmark: 'the courtyard of the Cloud Queen\'s pillow palace', secret: 'a hidden staircase that climbs up to the very top of the sky' },
+    forest: { label: 'Starlight forest', noun: 'Starlight Forest', scene: 'You arrive in the Starlight Forest, where lantern-leaved trees hum softly and fireflies spell out lazy little words above the path.', landmark: 'the glowing hollow at the heart of the forest', secret: 'a tree whose branches are strung with sleeping wishes' },
+    garden: { label: 'Moon garden', noun: 'Moon Garden', scene: 'You arrive in the Moon Garden, where silver flowers open as you pass, each one holding a drop of moonlit dew.', landmark: 'the quiet pond where the moon takes its evening bath', secret: 'a little gate that only opens for people who tiptoe' },
+    planet: { label: 'Candy-coloured planet', noun: 'Candy Planet', scene: 'You arrive on a candy-coloured planet, where the ground is soft as sponge cake and rivers of pink lemonade fizz beneath a peppermint-striped sky.', landmark: 'a gumdrop mountain that hums when you wave at it', secret: 'a tiny bakery run by sleepy comets' }
+  };
+
+  var form = $('#dreamForm');
+  var card = $('#dreamCard');
+  var placeholder = $('#dreamPlaceholder');
+  var engine = $('#engine');
+  var createBtn = $('#createBtn');
+  var copyStatus = $('#copyStatus');
+  var lastDream = null;
+
+  function getChoices() {
+    var fd = new FormData(form);
+    return { mood: fd.get('mood') || 'peaceful', companion: fd.get('companion') || 'moon', destination: fd.get('destination') || 'cloud' };
+  }
+
+  function buildDream(c) {
+    var m = moods[c.mood], co = companions[c.companion], d = destinations[c.destination];
+    var title = 'The ' + pick(m.adj) + ' ' + d.noun + ' of ' + co.title;
+    var story = [
+      d.scene + ' ' + m.open,
+      co.meet,
+      co.short + ' ' + m.lead + ' ' + d.landmark + ', where you discover ' + d.secret + '.',
+      'As a thank-you, you are given ' + co.gift + '. ' + pick(m.end)
+    ].join(' ');
+    return { title: title, story: story, choices: c };
+  }
+
+  function renderDream(dream) {
+    var c = dream.choices, m = moods[c.mood];
+    card.style.setProperty('--card-a', m.colors.a);
+    card.style.setProperty('--card-b', m.colors.b);
+    card.style.setProperty('--card-ink', m.colors.ink);
+    $('#dreamMotif').innerHTML = m.motif;
+    $('#dreamTags').textContent = m.label + ' \u00B7 ' + companions[c.companion].label + ' \u00B7 ' + destinations[c.destination].label;
+    $('#dreamTitle').textContent = dream.title;
+    $('#dreamStory').textContent = dream.story;
+    copyStatus.textContent = '';
+    engine.setAttribute('data-mood', c.mood);
+    placeholder.hidden = true;
+    card.hidden = false;
+    /* restart the entrance animation */
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = '';
+  }
+
+  function magicParticles(mood) {
+    var box = $('#particles');
+    if (reduceMotion) return;
+    var palette = { peaceful: ['#D8C9F0', '#FFF7ED', '#9FB4E8'], adventurous: ['#F5D58A', '#FFB67A', '#F5C9D5'], mysterious: ['#B9A5F0', '#FFF7ED', '#7B6CC4'], magical: ['#F5D58A', '#F5C9D5', '#FFF7ED'] }[mood];
+    for (var i = 0; i < 34; i++) {
+      var p = document.createElement('span');
+      p.className = 'particle';
+      p.style.cssText = 'left:' + rand(4, 96) + '%;top:' + rand(55, 95) + '%;--s:' + rand(5, 12) + 'px;--x:' + rand(-50, 50) + 'px;--d:' + rand(1.2, 2.2) + 's;--c:' + pick(palette) + ';animation-delay:' + rand(0, .5) + 's';
+      box.appendChild(p);
+      (function (n) { setTimeout(function () { n.remove(); }, 2900); })(p);
+    }
+  }
+
+  function generate(fromAgain) {
+    var c = getChoices();
+    createBtn.disabled = true;
+    createBtn.textContent = 'Dreaming...';
+    engine.setAttribute('data-mood', c.mood);
+    magicParticles(c.mood);
+    return wait(reduceMotion ? 0 : 1100).then(function () {
+      var dream = buildDream(c);
+      /* On "Dream again" make sure the title changes when possible */
+      if (fromAgain && lastDream && dream.title === lastDream.title) dream = buildDream(c);
+      lastDream = dream;
+      renderDream(dream);
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create My Dream';
+      if (window.innerWidth < 900) card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      card.focus({ preventScroll: true });
+    });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); generate(false); });
+  $('#againBtn').addEventListener('click', function () { generate(true); });
+  $$('input[name="mood"]', form).forEach(function (r) {
+    r.addEventListener('change', function () { engine.setAttribute('data-mood', r.value); });
+  });
+  $('#surpriseBtn').addEventListener('click', function () {
+    ['mood', 'companion', 'destination'].forEach(function (name) {
+      var radios = $$('input[name="' + name + '"]', form);
+      pick(radios).checked = true;
+    });
+    generate(false);
+  });
+
+  /* Copy with Clipboard API + safe fallback */
+  function setCopyMsg(msg) { copyStatus.textContent = msg; }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  $('#copyBtn').addEventListener('click', function () {
+    if (!lastDream) return;
+    var text = lastDream.title + '\n\n' + lastDream.story + '\n\n(Dreamed up at Pip\'s Midnight Nursery)';
+    var done = function () { setCopyMsg('Copied! Share your dream with someone sleepy.'); };
+    var failed = function () {
+      if (fallbackCopy(text)) { done(); return; }
+      /* Last resort: select the story so the person can copy by hand */
+      var range = document.createRange();
+      range.selectNodeContents($('#dreamStory'));
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(range);
+      setCopyMsg('Could not copy automatically. The story is selected, so press Ctrl+C (or Cmd+C).');
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, failed);
+    } else { failed(); }
+  });
+
+  /* ---------- 10. Audio: a tiny music-box lullaby, made in the browser ---------- */
+  var audio = (function () {
+    var ctx = null, master = null, timer = null, step = 0, on = false;
+    var btn = $('#soundToggle'), label = $('.sound-label');
+    var N = { G3: 196, C4: 261.63, A4: 440, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880 };
+    var melody = ['E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5', 'D5', 'E5', 'G5', 'E5', 'D5', 'C5', 'A4', 'C5', 'C5'];
+    var supported = !!(window.AudioContext || window.webkitAudioContext);
+
+    function ensure() {
+      if (!supported) return false;
+      if (!ctx) {
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          master = ctx.createGain();
+          master.gain.value = 0.16;
+          master.connect(ctx.destination);
+        } catch (e) { supported = false; return false; }
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return true;
+    }
+    function note(freq, dur, vol) {
+      var t = ctx.currentTime;
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g); g.connect(master);
+      osc.start(t); osc.stop(t + dur + 0.05);
+    }
+    function tick() {
+      var name = melody[step % melody.length];
+      note(N[name], 1.6, 0.55);
+      if (step % 8 === 0) note(N.C4, 2.4, 0.3);
+      if (step % 8 === 4) note(N.G3, 2.4, 0.3);
+      step++;
+    }
+    function ui() {
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', on ? 'Turn lullaby off' : 'Turn lullaby on');
+      if (label) label.textContent = on ? 'Lullaby on' : 'Lullaby off';
+    }
+    function setOn(v) {
+      if (v && !ensure()) {
+        on = false;
+        btn.disabled = true;
+        if (label) label.textContent = 'No sound here';
+        btn.setAttribute('aria-label', 'Sound is not available in this browser');
+        return;
+      }
+      on = v;
+      clearInterval(timer);
+      if (on) { step = 0; tick(); timer = setInterval(tick, 650); }
+      ui();
+    }
+    function playPhrase() {
+      if (!ensure()) return false;
+      var i = 0;
+      (function next() {
+        if (i >= 8) return;
+        note(N[melody[i]], 1.4, 0.55);
+        i++;
+        setTimeout(next, 330);
+      })();
+      return true;
+    }
+    btn.addEventListener('click', function () { setOn(!on); });
+    document.addEventListener('visibilitychange', function () {
+      if (!ctx) return;
+      if (document.hidden) { clearInterval(timer); } else if (on) { clearInterval(timer); timer = setInterval(tick, 650); }
+    });
+    ui();
+    return { setOn: setOn, playPhrase: playPhrase };
+  })();
+
+  /* ---------- 11. Magical transition into the Dream Engine ---------- */
+  var portal = $('#portal');
+  $$('[data-enter-engine]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var go = function () {
+        document.getElementById('engine').scrollIntoView({ behavior: 'auto', block: 'start' });
+        if (history.replaceState) history.replaceState(null, '', '#engine');
+      };
+      if (reduceMotion) { go(); return; }
+      portal.classList.add('active');
+      setTimeout(go, 520);
+      setTimeout(function () { portal.classList.remove('active'); }, 1000);
+    });
+  });
+})();
