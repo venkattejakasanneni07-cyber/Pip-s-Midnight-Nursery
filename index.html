@@ -175,6 +175,7 @@
       <a href="#story">Story</a>
       <a href="#creations">Creations</a>
       <a href="#engine" data-enter-engine>Dream Engine</a>
+      <a href="#guestbook">Guestbook</a>
       <a href="#goodbye">Goodnight</a>
     </nav>
 
@@ -625,6 +626,34 @@
       </div>
     </section>
 
+    <!-- ===== E6. Dream guestbook (Tier 3: real backend with Supabase) ===== -->
+    <section class="chat guestbook" id="guestbook" aria-labelledby="guestbookTitle">
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">Real backend</p>
+          <h2 id="guestbookTitle">Dreams left for Pip</h2>
+          <p>Leave a little wish in Pip's night sky. Pip reads every one, and approved wishes appear below for everyone to see.</p>
+        </div>
+        <div class="chat-box gb-box reveal">
+          <form class="gb-form" id="guestbookForm" novalidate>
+            <label for="guestName">Your name</label>
+            <input id="guestName" class="chat-input" type="text" maxlength="30" required autocomplete="name" placeholder="What should Pip call you?">
+            <p class="gb-count" id="guestNameCount" aria-hidden="true">0 / 30</p>
+
+            <label for="guestWish">Your wish</label>
+            <textarea id="guestWish" class="chat-input gb-textarea" maxlength="280" required rows="3" placeholder="Leave a little dream..."></textarea>
+            <p class="gb-count" id="guestWishCount" aria-hidden="true">0 / 280</p>
+
+            <button type="submit" class="btn btn-primary">Leave a dream</button>
+            <p class="chat-status" id="guestbookStatus" role="status" aria-live="polite"></p>
+          </form>
+
+          <ul class="gb-list" id="guestbookEntries" aria-label="Approved dreams"></ul>
+          <p class="chat-note">Wishes are saved online with Supabase and shown after Pip approves them. Please do not share private details.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== H. Final scene ===== -->
     <section class="goodbye" id="goodbye" aria-labelledby="goodbyeTitle">
       <div class="goodbye-sky" aria-hidden="true"><div class="stars" id="endStars"></div></div>
@@ -659,7 +688,7 @@
 
         <footer class="credits">
           <h3>Credits</h3>
-          <p>Art: official haX "Baby's First Website" Track 1 Creator Asset Pack (Pip, lullaby music box, dream lantern, portrait). Cloud Pillow No. 7 and story scenes: original SVG drawings, written with help from Claude (AI). Sound: lullaby and chimes are synthesised live in your browser with the Web Audio API, no audio files. Fonts: Fraunces and Nunito from Google Fonts (open source). No other libraries.</p>
+          <p>Art: official haX "Baby's First Website" Track 1 Creator Asset Pack (Pip, lullaby music box, dream lantern, portrait). Cloud Pillow No. 7 and story scenes: original SVG drawings, written with help from Claude (AI). Sound: lullaby and chimes are synthesised live in your browser with the Web Audio API, no audio files. Fonts: Fraunces and Nunito from Google Fonts (open source). Guestbook database: Supabase. Hosting: Vercel. No other front-end libraries.</p>
         </footer>
       </div>
     </section>
@@ -717,39 +746,7 @@
   <noscript><p class="noscript">Pip's nursery uses a little JavaScript to come alive. Please turn it on and come back.</p></noscript>
 
   <script src="script.js"></script>
-  
-<section id="guestbook" class="wrap">
-  <h2>Dreams left for Pip ✨</h2>
-  <p>Leave a little wish in Pip's night sky.</p>
 
-  <form id="guestbookForm">
-    <label for="guestName">Your name</label>
-    <input
-      id="guestName"
-      type="text"
-      maxlength="30"
-      required
-      autocomplete="name"
-      placeholder="What should Pip call you?"
-    />
-
-    <label for="guestWish">Your wish</label>
-    <textarea
-      id="guestWish"
-      maxlength="280"
-      required
-      rows="3"
-      placeholder="Leave a little dream..."
-    ></textarea>
-
-    <button type="submit">Leave a dream ✨</button>
-    <p id="guestbookStatus" role="status" aria-live="polite"></p>
-  </form>
-
-  <ul id="guestbookEntries" aria-live="polite"></ul>
-</section>
-
-<script type="module" src="./guestbook.js"></script>
-
+  <script type="module" src="./guestbook.js"></script>
 </body>
 </html>
