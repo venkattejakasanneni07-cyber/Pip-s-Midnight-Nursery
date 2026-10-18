@@ -136,6 +136,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 @media (min-width: 560px) and (max-width: 899px) { .sound-label { display: inline; } }
 @media (max-width: 420px) { .brand span { font-size: .95rem; } }
+@media (max-width: 400px) { .brand span { display: none; } }
 
 /* ---------- 4. Hero ---------- */
 .hero {
@@ -170,7 +171,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hero-actions .btn { width: 100%; max-width: 360px; margin-inline: auto; }
 
 .moon {
-  position: absolute; top: -6px; right: 6%; width: clamp(110px, 24vw, 190px); aspect-ratio: 1;
+  z-index: 3; position: absolute; top: -6px; right: 6%; width: clamp(110px, 24vw, 190px); aspect-ratio: 1;
   border: 0; background: none; padding: 0; border-radius: 50%;
   filter: drop-shadow(0 0 28px rgba(245, 213, 138, .65));
   transition: transform .4s ease, filter .4s ease;
@@ -186,7 +187,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .moon[data-state="giggle"] { animation: wobble .5s ease; }
 @keyframes wobble { 25% { transform: rotate(-8deg) scale(1.08); } 75% { transform: rotate(8deg) scale(1.08); } }
 
-.pip-wrap { width: clamp(180px, 46vw, 300px); animation: bob 5s ease-in-out infinite; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, .35)); }
+.pip-wrap { position: relative; z-index: 1; width: clamp(180px, 46vw, 300px); animation: bob 5s ease-in-out infinite; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, .35)); }
 @keyframes bob { 50% { transform: translateY(-12px); } }
 .hint { position: absolute; bottom: -4px; margin: 0; font-size: .85rem; color: var(--lavender); font-style: italic; }
 
@@ -435,3 +436,101 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .cloud, .cursor-star { display: none; }
   .star { opacity: .8; }
 }
+
+/* ---------- 12. Lullaby Lab, credits, day mode ---------- */
+.lab { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.lab[hidden] { display: none; }
+.lab-title { font-weight: 700; margin-bottom: 8px; }
+.lab-keys { display: flex; gap: 8px; flex-wrap: wrap; }
+.lab-key {
+  width: 52px; height: 52px; border-radius: 16px 16px 26px 26px; border: 2px solid var(--midnight);
+  background: linear-gradient(180deg, #FFF2C4, var(--gold)); color: var(--midnight); font-weight: 800;
+  transition: transform .12s, box-shadow .12s;
+}
+.lab-key:nth-child(2) { background: linear-gradient(180deg, #FDE3EA, var(--blush)); }
+.lab-key:nth-child(3) { background: linear-gradient(180deg, #EFE8FB, var(--lavender)); }
+.lab-key:nth-child(4) { background: linear-gradient(180deg, #FFF2C4, var(--gold)); }
+.lab-key:nth-child(5) { background: linear-gradient(180deg, #FDE3EA, var(--blush)); }
+.lab-key:hover { transform: translateY(-2px); }
+.lab-key.pressed { transform: translateY(2px) scale(.94); box-shadow: 0 0 18px var(--gold); }
+
+.credits { margin: 28px auto 0; max-width: 62ch; padding-top: 18px; border-top: 1px solid rgba(255, 247, 237, .2); font-size: .85rem; color: var(--lavender); }
+.credits h3 { font-size: 1rem; margin-bottom: .3em; color: var(--ivory); }
+.credits p { margin: 0; }
+.colophon { margin-top: 40px; }
+
+/* Day mode: a soft morning nursery */
+.day .hero { color: var(--midnight); background:
+    radial-gradient(ellipse at 70% 30%, rgba(255, 255, 255, .6), transparent 55%),
+    linear-gradient(180deg, #FFE9D6 0%, #F9D6E2 55%, #D8C9F0 100%); }
+.day .hero .stars { opacity: 0; }
+.day .cloud { background: linear-gradient(180deg, rgba(255, 255, 255, .95), rgba(255, 247, 237, .7)); }
+.day .hero .lede { color: var(--ink); }
+.day .hero .eyebrow, .day .hero h1 em { color: #8E3F58; }
+.day .hero .btn-ghost { border-color: var(--midnight); color: var(--midnight); }
+.day .hero .btn-ghost:hover { background: rgba(37, 38, 66, .08); }
+.day .hint { color: var(--ink-soft); }
+.day .scroll-cue { border-color: rgba(37, 38, 66, .5); }
+.day .site-header { background: rgba(37, 38, 66, .9); }
+.day .meet { background: linear-gradient(180deg, #D8C9F0 0, var(--ivory) 140px); }
+
+/* ---------- 13. Official artwork ---------- */
+.art img { border-radius: 26px; }
+/* the official pictures have a cream backdrop, so on the night sky we fade their edges into a soft glow */
+.pip-wrap .art img, .goodbye-pip .art img {
+  border-radius: 0;
+  -webkit-mask-image: radial-gradient(ellipse 68% 70% at 50% 50%, #000 58%, transparent 100%);
+          mask-image: radial-gradient(ellipse 68% 70% at 50% 50%, #000 58%, transparent 100%);
+}
+.pip-wrap { filter: drop-shadow(0 0 40px rgba(255, 238, 200, .35)); }
+.day .pip-wrap { filter: none; }
+.hero .moon { right: auto; left: 2%; top: 4%; z-index: 3; }
+.scene-4 .scene-art .art img { box-shadow: 0 20px 40px -18px rgba(37, 38, 66, .6); }
+.meet-stage .art img { box-shadow: 0 24px 50px -24px rgba(37, 38, 66, .55); }
+.fav .art { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; border: 2px solid var(--blush); }
+.fav .art img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.creation-art img { box-shadow: 0 14px 30px -18px rgba(37, 38, 66, .5); }
+.modal-art .art img { box-shadow: 0 16px 36px -18px rgba(37, 38, 66, .55); }
+@media (min-width: 900px) { .hero .moon { left: 4%; top: 2%; } }
+
+/* polish: soften hero image edges more, keep caption clear, even card art heights */
+.pip-wrap .art img, .goodbye-pip .art img {
+  -webkit-mask-image: radial-gradient(ellipse 62% 64% at 50% 50%, #000 48%, transparent 100%);
+          mask-image: radial-gradient(ellipse 62% 64% at 50% 50%, #000 48%, transparent 100%);
+}
+.hint { position: static; margin: 8px 0 0; text-align: center; }
+.hero-art { align-content: center; }
+.creation-art { aspect-ratio: 8 / 7; display: grid; place-items: center; }
+.creation-art img { width: 100%; height: 100%; object-fit: cover; }
+.creation-art svg { width: 88%; }
+
+/* ---------- 14. Circle cursor (desktop mouse only; class added by script.js) ---------- */
+.cursor-star {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle, #FFF7ED 0 14%, rgba(245, 213, 138, .35) 15% 100%);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 18px 3px rgba(245, 213, 138, .65), inset 0 0 8px rgba(245, 213, 138, .5);
+  mix-blend-mode: normal; transition: opacity .3s, width .2s, height .2s, margin .2s, background .2s;
+}
+.cursor-star.hot { width: 46px; height: 46px; margin: -7px 0 0 -7px; background: radial-gradient(circle, #FFF7ED 0 10%, rgba(245, 213, 138, .55) 11% 100%); }
+.cursor-star.press { width: 22px; height: 22px; margin: 5px 0 0 5px; }
+.custom-cursor, .custom-cursor * { cursor: none !important; }
+/* pop-ups sit above the circle, so give them the normal pointer back */
+.custom-cursor dialog, .custom-cursor dialog * { cursor: auto !important; }
+.custom-cursor dialog button, .custom-cursor dialog a { cursor: pointer !important; }
+
+/* make the circle visible on gold buttons and light sections too */
+.cursor-star {
+  border-color: #FFF7ED;
+  box-shadow: 0 0 0 2px rgba(37, 38, 66, .85), 0 0 18px 4px rgba(245, 213, 138, .7);
+}
+
+/* ---------- 15. Cursor is a medium glowing gold dot ---------- */
+.cursor-star {
+  width: 18px; height: 18px; margin: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #FFF2C4 0%, #F5D58A 55%, #E8B94F 100%);
+  border: 0;
+  box-shadow: 0 0 0 1.5px rgba(37, 38, 66, .8), 0 0 12px 4px rgba(245, 213, 138, .85), 0 0 28px 8px rgba(245, 213, 138, .4);
+}
+.cursor-star.hot { width: 26px; height: 26px; margin: -4px 0 0 -4px; background: radial-gradient(circle at 35% 35%, #FFF7DD 0%, #F5D58A 60%, #E8B94F 100%); }
+.cursor-star.press { width: 12px; height: 12px; margin: 3px 0 0 3px; }

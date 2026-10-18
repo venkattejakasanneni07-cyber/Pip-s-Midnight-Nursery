@@ -1,8 +1,8 @@
 # Pip's Midnight Nursery
 
-A hackathon website for haX.baby "Baby's First Website", Track 1. Plain HTML, CSS and JavaScript. No installs, no build step, no API keys.
+Entry for haX.baby "Baby's First Website", Track 1. Plain HTML, CSS and JavaScript. No installs, no build step, no API keys.
 
-## 1. Folder structure
+## Folder structure
 
 ```
 pips-midnight-nursery/
@@ -11,71 +11,69 @@ pips-midnight-nursery/
   script.js
   README.md
   assets/
-    images/        <- put the official artwork here
-    audio/         <- not needed (the lullaby is made in the browser)
+    images/     <- put the official haX images here
 ```
 
-## 2. Run it
+## Run it
 
-1. Install VS Code and the "Live Server" extension (free).
-2. In VS Code: File > Open Folder > choose `pips-midnight-nursery`.
-3. Right-click `index.html` > "Open with Live Server". (Double-clicking index.html also works.)
+1. Open the folder in VS Code (File > Open Folder).
+2. Install the free "Live Server" extension.
+3. Right-click `index.html` > "Open with Live Server". (Double-clicking `index.html` also works.)
 
-## 3. Adding the official artwork
+## Official art (already included)
 
-No official files were available while this was built, so every picture is a built-in original SVG drawing. The site works fully like this.
+The four official haX pictures are in `assets/images/`, resized to small JPGs so the page loads fast:
 
-To use the official art, copy your files into `assets/images/` using these exact names. Whatever file exists is swapped in automatically. Anything missing keeps its drawing, so nothing breaks.
-
-| File name | Used for |
+| File | Used for |
 |---|---|
-| `pip.png` | Hero Pip |
-| `pip-portrait.png` | Meet Pip section |
-| `pip-waving.png` | Story scene 4 |
-| `pip-sleeping.png` | Goodnight scene |
-| `nightlight.png` | Moonlight Lantern card, modal and favourites |
-| `music-box.png` | Unicorn Dreambox card, modal and favourites |
-| `cloud-pillow.png` | Cloud Pillow No. 7 |
+| `pip_avatar_cloud.jpg` | Hero Pip and story scene 4 |
+| `pip_portrait.jpg` | Meet Pip and the goodnight scene |
+| `pip_lullaby_box.jpg` | Music box (favourites and Dreambox card) |
+| `pip_dream_lantern.jpg` | Moon lantern (favourites and Lantern card) |
 
-If your official files have other names, rename them to the names above (or change the `data-asset="..."` text in `index.html`). PNG, and the same name with `.png` only, is expected. To use JPG or WebP, change the extension in `index.html`.
+Cloud Pillow No. 7 has no official picture, so it uses an original SVG drawing. If a picture file is ever missing, a built-in drawing shows instead, so nothing breaks.
 
-## 4. Where to test each official requirement
+## Brief checklist (from https://hax.baby/baby-problem)
 
-1. **What they are**: scroll to "Meet Pip". Tap the four floating labels on Pip.
-2. **What they do**: "Creations" section. Open each of the three cards and press the button inside the pop-up.
-3. **Their story**: "Story" section. Four scenes that fade in as you scroll.
-4. **Immersion**: move the mouse over the hero (star follows, parallax), click or tap anywhere (star burst), hover the moon (it wakes up), use the Lullaby button in the header (off by default).
-5. **Mobile layout**: browser DevTools (F12) > device toolbar. Try 360, 390, 768, 1024 and 1440 px wide. Check no sideways scrolling and that the menu button opens the menu.
-6. **Hidden Easter egg**: click or tap the big moon in the hero three times quickly (or focus it with Tab and press Enter three times).
+| Requirement | Where to test it |
+|---|---|
+| 1. What they are | "Meet Pip": Junior Dream Engineer, baby, gentle. Tap the 4 labels. |
+| 2. What they do | "Creations": 3 projects, each with a pop-up and a small toy. |
+| 3. Their story | "Story": 4 scenes revealed by scrolling. |
+| 4. Immersion | Star follows the mouse, parallax, taps burst into stars, moon wakes on hover, sound with a mute switch (top right, always visible). |
+| 5. Mobile friendly | DevTools (F12) > phone icon: 360, 390, 768, 1024, 1440 px. No sideways scroll. |
+| 6. Hidden Easter egg | Tap the big moon 3 times quickly (or Tab to it and press Enter 3 times). |
+| Mute switch | "Sound" button in the header. Off by default. Mutes everything. |
+| Sections about 150 words or less | Each section is under 150 words. |
+| Credit every source | Footer "Credits" in the goodnight section. |
+| Day/night or mood toggle (Tier 1) | "Night/Day" button in the header, plus the Dream Engine mood colours. |
+| Lullaby Lab with real audio (Tier 2) | Creations > The Unicorn Dreambox > star keys, plus the looping lullaby (all made with the Web Audio API). |
+| Click sounds + mute (side quest) | Turn sound on, then press any button. |
 
-## 5. Full test checklist
+## Sound
 
-- [ ] Header links jump to the right sections (also on mobile via the menu button).
-- [ ] Escape closes the mobile menu and any pop-up.
-- [ ] Hero buttons: "Enter Pip's Dreamworld" goes to Meet Pip, "Discover Pip's little universe" goes to the Story.
-- [ ] "Dream Engine" links play the star-ring transition and land on the engine.
-- [ ] Dream Engine: pick options, press "Create My Dream". A card appears with a title, story and motif.
-- [ ] Try different moods: the background and card colours change.
-- [ ] "Dream again" gives a fresh version. "Surprise me" picks random options.
-- [ ] "Copy my dream": message appears. Paste somewhere to confirm.
-- [ ] Lullaby button toggles sound and the label changes. Sound is silent on load.
-- [ ] Turn on "Reduce motion" in your computer's accessibility settings. Animations should calm down and everything should still work.
-- [ ] Tab through the page. A gold or rose outline should always show where you are.
+Everything is made live in the browser with the Web Audio API, so there are no audio files to supply or credit.
+- The header "Sound" button turns all sound on or off. It is off when the page loads.
+- On: a gentle looping music-box lullaby plus soft chimes on buttons.
+- Playing the music box or a star key also turns sound on (without the loop). Press "Sound" again to mute.
 
-## 6. Publish for free
+## What you still must do for submission (due 19 Oct 2026, 17:17 IST)
 
-**Netlify Drop (easiest):** go to https://app.netlify.com/drop, drag the whole `pips-midnight-nursery` folder onto the page. You get a link in seconds.
+- [ ] Public GitHub repo with commits made between 17 and 19 October (commit often, with clear messages).
+- [ ] Live website URL (Netlify Drop or GitHub Pages).
+- [ ] A short write-up of a few paragraphs about how you built it.
+- [ ] Credits (already in the site footer; paste them into the form too).
+- [ ] Open the live site once and check the browser console (F12) for red errors.
 
-**GitHub Pages:**
-1. Create a free account and a new public repository.
-2. Upload `index.html`, `style.css`, `script.js` and the `assets` folder (drag them into the repo page, then Commit).
-3. Repository > Settings > Pages > Source: "Deploy from a branch", branch `main`, folder `/ (root)`, Save.
-4. Wait a minute or two. Your link looks like `https://YOURNAME.github.io/REPONAME/`.
+## Publish
 
-## 7. Common problems
+**Netlify Drop:** drag the whole folder onto https://app.netlify.com/drop.
 
-- **Blank page or nothing moves**: open DevTools (F12) > Console and read the red message. Usually a file was renamed. Keep `index.html`, `style.css` and `script.js` in the same folder.
-- **Images don't change after adding files**: file names are case-sensitive on the web. Use exactly `pip.png`, not `Pip.PNG`. Refresh with Ctrl+Shift+R.
-- **Works locally, broken after publishing**: make sure the `assets` folder was uploaded, and that `index.html` is at the top level, not inside another folder.
-- **Copy button says it could not copy**: some browsers block clipboard access on plain `file://` pages. It works on Live Server, Netlify and GitHub Pages. If not, the story is selected for you to copy by hand.
-- **Fonts look different**: the Google fonts need internet once. Without them, the site uses safe fallback fonts and still works.
+**GitHub Pages:** create a public repo, upload the files and `assets` folder, then Settings > Pages > Deploy from branch `main`, folder `/ (root)`.
+
+## Common problems
+
+- **Images do not show online:** names are case-sensitive and the `assets/images` folder must be uploaded next to `index.html`. Press Ctrl+Shift+R after changes.
+- **Red "ERR_FILE_NOT_FOUND" in the console:** an image is missing from `assets/images/`. Make sure the whole `assets` folder is uploaded.
+- **Works locally, broken online:** make sure `index.html` is at the top level and the `assets` folder was uploaded too.
+- **Copy button says it could not copy:** some browsers block copying on plain `file://` pages. It works on Live Server, Netlify and GitHub Pages.

@@ -5,7 +5,7 @@
    3. Header + nav       4. Reveal + story progress
    5. Hero immersion     6. Moon + Easter egg
    7. Fact tags          8. Creations modals
-   9. Dream Engine      10. Audio (lullaby)
+   9. Dream Engine      10. Audio + day/night
   11. Portal transition
    Everything runs in the browser. No internet needed after load.
    ========================================================== */
@@ -124,23 +124,27 @@
     }, { passive: true });
   }
 
-  /* A little star follows the mouse (desktop only) */
+  /* A glowing circle replaces the mouse arrow (desktop mouse only; touch and keyboard are untouched) */
   var cursorStar = $('#cursorStar');
   if (cursorStar && finePointer && !reduceMotion) {
-    var cx = 0, cy = 0, tx = 0, ty = 0, running = false;
-    document.addEventListener('pointermove', function (e) {
-      if (e.pointerType !== 'mouse') return;
-      tx = e.clientX; ty = e.clientY;
-      cursorStar.classList.add('on');
-      if (!running) { running = true; requestAnimationFrame(follow); }
-    }, { passive: true });
-    document.addEventListener('mouseleave', function () { cursorStar.classList.remove('on'); });
+    var cx = 0, cy = 0, tx = 0, ty = 0, running = false, seen = false;
     var follow = function () {
-      cx += (tx - cx) * 0.14; cy += (ty - cy) * 0.14;
-      cursorStar.style.transform = 'translate(' + (cx - 11) + 'px,' + (cy - 11) + 'px)';
+      cx += (tx - cx) * 0.35; cy += (ty - cy) * 0.35;
+      cursorStar.style.transform = 'translate(' + (cx - 9) + 'px,' + (cy - 9) + 'px)';
       if (Math.abs(tx - cx) > 0.3 || Math.abs(ty - cy) > 0.3) requestAnimationFrame(follow);
       else running = false;
     };
+    document.addEventListener('pointermove', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      tx = e.clientX; ty = e.clientY;
+      if (!seen) { seen = true; cx = tx; cy = ty; document.documentElement.classList.add('custom-cursor'); }
+      cursorStar.classList.add('on');
+      cursorStar.classList.toggle('hot', !!e.target.closest('a, button, label, summary'));
+      if (!running) { running = true; requestAnimationFrame(follow); }
+    }, { passive: true });
+    document.addEventListener('mouseleave', function () { cursorStar.classList.remove('on'); });
+    document.addEventListener('pointerdown', function () { cursorStar.classList.add('press'); });
+    document.addEventListener('pointerup', function () { cursorStar.classList.remove('press'); });
   }
 
   /* Stars burst where you click or tap */
@@ -230,16 +234,16 @@
   }
 
   $('#secretLullaby').addEventListener('click', function () {
-    audio.setOn(true);
+    audio.setOn(true, true);
     this.textContent = 'Humming softly...';
   });
 
   /* ---------- 7. Fact tags on Pip ---------- */
   var facts = {
-    'fact-ears': 'Pip\'s ears are shaped like tiny crescent moons, and they twitch whenever somebody, somewhere, starts to dream.',
-    'fact-cap': 'The lavender nightcap holds Pip\'s favourite dreams. If you listen closely, it hums.',
-    'fact-star': 'The star in Pip\'s pocket is the very first one Pip ever found. It glows brighter when Pip is happy.',
-    'fact-tummy': 'The golden crescent on Pip\'s tummy is a piece of moonlight that Pip kept after a very long night.'
+    'fact-job': 'Pip is a Junior Dream Engineer. When a dream comes out wobbly or gets forgotten, Pip picks up the tiny tools and fixes it before morning.',
+    'fact-power': 'Pip can hear dreams humming, like a very quiet kettle, and follows the hum to find the ones that got lost.',
+    'fact-sound': 'Nothing makes Pip sleepier than the lullaby music box with the golden key. Three turns and Pip is yawning.',
+    'fact-secret': 'Pip always naps with the moon lantern left on, just in case a dream comes looking in the dark.'
   };
   var factText = $('#factText');
   var tags = $$('.tag');
@@ -274,7 +278,7 @@
     },
     box: {
       no: 'Creation No. 2', title: 'The Unicorn Dreambox', bg: '#FBDDE6', btn: 'Wind the music box',
-      story: 'Inside the Dreambox lives a unicorn who dances whenever the key is turned. Each melody is one of the happiest dreams ever dreamed, kept safe so it can never fade.',
+      story: 'Inside the Dreambox lives a unicorn who dances whenever the golden key is turned, and the star chimes ring out softly. Each melody is one of the happiest dreams ever dreamed, kept safe so it can never fade.',
       label: 'Try it: wind the key and open a happy dream.',
       source: '#creations .c-box .creation-art',
       play: function () {
@@ -329,6 +333,7 @@
       var clone = src.cloneNode(true);
       clone.removeAttribute('data-asset');
       modalArt.appendChild(clone);
+      $('#lab').hidden = (key !== 'box');
       openDialog(projectModal, card);
     });
   });
@@ -344,7 +349,7 @@
       lead: 'drifts beside you, slow and unhurried, all the way to',
       end: ['You settle into the quiet like a feather finding its pillow.', 'The last thing you hear is your own gentle breathing, and it sounds like a lullaby.'],
       colors: { a: '#DCE6F7', b: '#D8C9F0', ink: '#252642' },
-      motif: '<svg viewBox="0 0 48 48"><path d="M30 5a18 18 0 1 0 0 34a14 14 0 0 1 0-34z" fill="currentColor"/><path d="M6 45q9-5 18 0t18 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
+      motif: '<svg viewBox="0 0 48 48"><path d="M30 5a18 18 0 1 0 0 34a34 34 0 0 1 0-34z" fill="currentColor"/><path d="M6 45q9-5 18 0t18 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>'
     },
     adventurous: {
       label: 'Adventurous', adj: ['Daring', 'Wild-Hearted'],
@@ -449,8 +454,10 @@
     magicParticles(c.mood);
     return wait(reduceMotion ? 0 : 1100).then(function () {
       var dream = buildDream(c);
-      /* On "Dream again" make sure the title changes when possible */
-      if (fromAgain && lastDream && dream.title === lastDream.title) dream = buildDream(c);
+      /* On "Dream again" make sure the dream changes when possible */
+      if (fromAgain && lastDream) {
+        for (var tries = 0; tries < 8 && dream.title === lastDream.title; tries++) dream = buildDream(c);
+      }
       lastDream = dream;
       renderDream(dream);
       createBtn.disabled = false;
@@ -506,12 +513,14 @@
     } else { failed(); }
   });
 
-  /* ---------- 10. Audio: a tiny music-box lullaby, made in the browser ---------- */
+  /* ---------- 10. Audio: music-box lullaby + chimes, made in the browser (Web Audio API) ---------- */
+  /* One switch controls ALL sound. Off by default. Nothing plays until the visitor clicks something. */
   var audio = (function () {
-    var ctx = null, master = null, timer = null, step = 0, on = false;
-    var btn = $('#soundToggle'), label = $('.sound-label');
+    var ctx = null, master = null, timer = null, step = 0, on = false, ambient = false;
+    var btn = $('#soundToggle'), label = $('#soundLabel');
     var N = { G3: 196, C4: 261.63, A4: 440, C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880 };
     var melody = ['E5', 'G5', 'A5', 'G5', 'E5', 'D5', 'C5', 'D5', 'E5', 'G5', 'E5', 'D5', 'C5', 'A4', 'C5', 'C5'];
+    var scale = ['C5', 'D5', 'E5', 'G5', 'A5'];   /* the five Lullaby Lab keys */
     var supported = !!(window.AudioContext || window.webkitAudioContext);
 
     function ensure() {
@@ -547,41 +556,94 @@
     }
     function ui() {
       btn.setAttribute('aria-pressed', String(on));
-      btn.setAttribute('aria-label', on ? 'Turn lullaby off' : 'Turn lullaby on');
-      if (label) label.textContent = on ? 'Lullaby on' : 'Lullaby off';
+      btn.setAttribute('aria-label', on ? 'Mute all sound' : 'Turn sound on');
+      if (label) label.textContent = on ? 'Sound on' : 'Sound off';
     }
-    function setOn(v) {
+    function stopAmbient() { clearInterval(timer); ambient = false; }
+    function startAmbient() { clearInterval(timer); ambient = true; step = 0; tick(); timer = setInterval(tick, 650); }
+
+    /* withAmbient = also play the gentle looping lullaby */
+    function setOn(v, withAmbient) {
       if (v && !ensure()) {
         on = false;
         btn.disabled = true;
         if (label) label.textContent = 'No sound here';
         btn.setAttribute('aria-label', 'Sound is not available in this browser');
-        return;
+        return false;
       }
       on = v;
-      clearInterval(timer);
-      if (on) { step = 0; tick(); timer = setInterval(tick, 650); }
+      stopAmbient();
+      if (on && withAmbient) startAmbient();
       ui();
+      return on;
     }
+    /* Used when a visitor deliberately plays an instrument (music box, lab keys): turns sound on, without the background loop */
+    function wake() { return on ? true : setOn(true, false); }
+
     function playPhrase() {
-      if (!ensure()) return false;
+      if (!wake()) return false;
       var i = 0;
       (function next() {
-        if (i >= 8) return;
+        if (!on || i >= 8) return;
         note(N[melody[i]], 1.4, 0.55);
         i++;
         setTimeout(next, 330);
       })();
       return true;
     }
-    btn.addEventListener('click', function () { setOn(!on); });
+    function playNote(i) {
+      if (!wake()) return false;
+      note(N[scale[i]], 1.8, 0.6);
+      return true;
+    }
+    /* tiny soft click sound, only when sound is already on */
+    function chime() {
+      if (!on || !ctx) return;
+      note(N[scale[Math.floor(Math.random() * scale.length)]], 0.45, 0.22);
+    }
+
+    btn.addEventListener('click', function () {
+      if (on) setOn(false); else setOn(true, true);
+    });
     document.addEventListener('visibilitychange', function () {
       if (!ctx) return;
-      if (document.hidden) { clearInterval(timer); } else if (on) { clearInterval(timer); timer = setInterval(tick, 650); }
+      clearInterval(timer);
+      if (!document.hidden && on && ambient) timer = setInterval(tick, 650);
     });
     ui();
-    return { setOn: setOn, playPhrase: playPhrase };
+    return { setOn: setOn, playPhrase: playPhrase, playNote: playNote, chime: chime };
   })();
+
+  /* Click chimes (only audible when sound is on) */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('#soundToggle, .lab-key')) return;
+    if (e.target.closest('.btn, .chip, .tag, .creation, .moon')) audio.chime();
+  });
+
+  /* Lullaby Lab keys */
+  $$('.lab-key').forEach(function (k) {
+    k.addEventListener('click', function () {
+      var ok = audio.playNote(Number(k.getAttribute('data-note')));
+      k.classList.add('pressed');
+      setTimeout(function () { k.classList.remove('pressed'); }, 180);
+      playResult.textContent = ok ? '' : 'Sound is not available in this browser.';
+    });
+  });
+
+  /* Day / night toggle */
+  var themeBtn = $('#themeToggle'), themeLabel = $('#themeLabel');
+  function setDay(isDay) {
+    document.documentElement.classList.toggle('day', isDay);
+    themeBtn.setAttribute('aria-pressed', String(isDay));
+    themeBtn.setAttribute('aria-label', isDay ? 'Switch to night' : 'Switch to day');
+    themeLabel.textContent = isDay ? 'Day' : 'Night';
+  }
+  try { if (localStorage.getItem('pip-theme') === 'day') setDay(true); } catch (err) { /* storage blocked: ignore */ }
+  themeBtn.addEventListener('click', function () {
+    var next = !document.documentElement.classList.contains('day');
+    setDay(next);
+    try { localStorage.setItem('pip-theme', next ? 'day' : 'night'); } catch (err) { /* ignore */ }
+  });
 
   /* ---------- 11. Magical transition into the Dream Engine ---------- */
   var portal = $('#portal');
