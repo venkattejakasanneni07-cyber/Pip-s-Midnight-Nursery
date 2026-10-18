@@ -49,6 +49,13 @@ Cloud Pillow No. 7 has no official picture, so it uses an original SVG drawing. 
 | Day/night or mood toggle (Tier 1) | "Night/Day" button in the header, plus the Dream Engine mood colours. |
 | Lullaby Lab with real audio (Tier 2) | Creations > The Unicorn Dreambox > star keys, plus the looping lullaby (all made with the Web Audio API). |
 | Click sounds + mute (side quest) | Turn sound on, then press any button. |
+| Sparkle cursor trail (side quest) | Move the mouse on a computer: gold stars drop behind the dot. |
+| Hit counter odometer (side quest) | Bottom of the page: "Your visit no." rolls into place. It counts visits from this browser only, not all visitors. |
+| Early-web touches | Scrolling ticker under the hero, and the retro badges ("Best viewed in any browser at bedtime") at the bottom. |
+| Hidden constellation | Hero sky: move the mouse (or tap) and gold star lines light up under it. |
+| Pip talks | Tap Pip in the hero: a speech bubble with a different line each tap. |
+| Dream shelf | Make dreams in the Dream Engine: each is saved as a glowing jar below it. Tap a jar to reopen the dream. "Clear shelf" empties it (kept in this browser only). |
+| Welcome back | Under the hero buttons: Pip greets returning visitors and mentions saved dreams. |
 
 ## Sound
 

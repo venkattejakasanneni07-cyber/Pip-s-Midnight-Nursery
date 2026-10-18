@@ -118,9 +118,20 @@
       var r = hero.getBoundingClientRect();
       var x = (e.clientX - r.left) / r.width - 0.5;
       var y = (e.clientY - r.top) / r.height - 0.5;
+      hero.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      hero.style.setProperty('--my', (e.clientY - r.top) + 'px');
       if (moon) moon.style.translate = (x * -34) + 'px ' + (y * -24) + 'px';
       if (pipWrap) pipWrap.style.translate = (x * 22) + 'px ' + (y * 14) + 'px';
       clouds.forEach(function (c, i) { c.style.marginTop = (y * (10 + i * 8)) + 'px'; });
+    }, { passive: true });
+  }
+
+  /* touch: a tap lights up the hidden constellation where you touch */
+  if (!reduceMotion && hero) {
+    hero.addEventListener('pointerdown', function (e) {
+      var r = hero.getBoundingClientRect();
+      hero.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      hero.style.setProperty('--my', (e.clientY - r.top) + 'px');
     }, { passive: true });
   }
 
@@ -128,6 +139,21 @@
   var cursorStar = $('#cursorStar');
   if (cursorStar && finePointer && !reduceMotion) {
     var cx = 0, cy = 0, tx = 0, ty = 0, running = false, seen = false;
+    /* sparkle trail: tiny gold stars drop behind the dot */
+    var lastSx = -99, lastSy = -99, trailLayer = $('#burstLayer');
+    var sparkleColors = ['#F5D58A', '#FFF7ED', '#F5C9D5', '#D8C9F0'];
+    function sparkle(x, y) {
+      if (!trailLayer || trailLayer.childElementCount > 45) return;
+      var dx = x - lastSx, dy = y - lastSy;
+      if (dx * dx + dy * dy < 400) return;          /* only every ~20px of travel */
+      lastSx = x; lastSy = y;
+      var s = document.createElement('span');
+      var size = rand(7, 14);
+      s.className = 'sparkle';
+      s.style.cssText = 'left:' + (x + rand(-6, 6)) + 'px;top:' + (y + rand(-6, 6)) + 'px;width:' + size + 'px;height:' + size + 'px;background:' + pick(sparkleColors) + ';--sx:' + rand(-14, 14) + 'px';
+      trailLayer.appendChild(s);
+      setTimeout(function () { s.remove(); }, 900);
+    }
     var follow = function () {
       cx += (tx - cx) * 0.35; cy += (ty - cy) * 0.35;
       cursorStar.style.transform = 'translate(' + (cx - 9) + 'px,' + (cy - 9) + 'px)';
@@ -139,6 +165,7 @@
       tx = e.clientX; ty = e.clientY;
       if (!seen) { seen = true; cx = tx; cy = ty; document.documentElement.classList.add('custom-cursor'); }
       cursorStar.classList.add('on');
+      sparkle(e.clientX, e.clientY);
       cursorStar.classList.toggle('hot', !!e.target.closest('a, button, label, summary'));
       if (!running) { running = true; requestAnimationFrame(follow); }
     }, { passive: true });
@@ -460,6 +487,7 @@
       }
       lastDream = dream;
       renderDream(dream);
+      saveDream(dream);
       createBtn.disabled = false;
       createBtn.textContent = 'Create My Dream';
       if (window.innerWidth < 900) card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
@@ -617,7 +645,7 @@
   /* Click chimes (only audible when sound is on) */
   document.addEventListener('click', function (e) {
     if (e.target.closest('#soundToggle, .lab-key')) return;
-    if (e.target.closest('.btn, .chip, .tag, .creation, .moon')) audio.chime();
+    if (e.target.closest('.btn, .chip, .tag, .creation, .moon, .jar, .pip-hit')) audio.chime();
   });
 
   /* Lullaby Lab keys */
@@ -644,6 +672,153 @@
     setDay(next);
     try { localStorage.setItem('pip-theme', next ? 'day' : 'night'); } catch (err) { /* ignore */ }
   });
+
+  /* ---------- Dream shelf: every dream becomes a jar (kept in this browser) ---------- */
+  var SHELF_KEY = 'pip-dreams';
+  var shelf = [];
+  try {
+    var stored = JSON.parse(localStorage.getItem(SHELF_KEY) || '[]');
+    if (Array.isArray(stored)) shelf = stored.filter(function (d) {
+      return d && typeof d.title === 'string' && typeof d.story === 'string' && d.choices && moods[d.choices.mood] && companions[d.choices.companion] && destinations[d.choices.destination];
+    }).slice(0, 12);
+  } catch (err) { shelf = []; }
+
+  var jarsEl = $('#jars'), shelfEmpty = $('#shelfEmpty'), clearBtn = $('#clearShelf');
+
+  function persistShelf() { try { localStorage.setItem(SHELF_KEY, JSON.stringify(shelf)); } catch (err) { /* storage blocked: shelf lasts until the page closes */ } }
+
+  function renderShelf() {
+    jarsEl.innerHTML = '';
+    shelfEmpty.hidden = shelf.length > 0;
+    clearBtn.hidden = shelf.length === 0;
+    shelf.forEach(function (d, i) {
+      var li = document.createElement('li');
+      var b = document.createElement('button');
+      var col = moods[d.choices.mood].colors;
+      b.type = 'button';
+      b.className = 'jar';
+      b.setAttribute('data-i', String(i));
+      b.setAttribute('aria-label', 'Open saved dream: ' + d.title);
+      b.style.setProperty('--ja', col.a);
+      b.style.setProperty('--jb', col.b);
+      var glass = document.createElement('span'); glass.className = 'jar-glass';
+      var orb = document.createElement('span'); orb.className = 'jar-orb';
+      glass.appendChild(orb);
+      var name = document.createElement('span'); name.className = 'jar-name'; name.textContent = d.title;
+      b.appendChild(glass); b.appendChild(name);
+      li.appendChild(b); jarsEl.appendChild(li);
+    });
+  }
+
+  function saveDream(dream) {
+    shelf.unshift({ title: dream.title, story: dream.story, choices: dream.choices });
+    shelf = shelf.slice(0, 12);
+    persistShelf();
+    renderShelf();
+  }
+
+  jarsEl.addEventListener('click', function (e) {
+    var b = e.target.closest('.jar');
+    if (!b) return;
+    var d = shelf[Number(b.getAttribute('data-i'))];
+    if (!d) return;
+    lastDream = d;
+    renderDream(d);
+    card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    card.focus({ preventScroll: true });
+  });
+
+  var clearTimer = null;
+  clearBtn.addEventListener('click', function () {
+    if (clearBtn.getAttribute('data-sure') !== '1') {
+      clearBtn.setAttribute('data-sure', '1');
+      clearBtn.textContent = 'Tap again to clear';
+      clearTimer = setTimeout(function () { clearBtn.removeAttribute('data-sure'); clearBtn.textContent = 'Clear shelf'; }, 3000);
+      return;
+    }
+    clearTimeout(clearTimer);
+    clearBtn.removeAttribute('data-sure');
+    clearBtn.textContent = 'Clear shelf';
+    shelf = [];
+    persistShelf();
+    renderShelf();
+  });
+  renderShelf();
+
+  /* ---------- Pip talks when you tap Pip ---------- */
+  (function () {
+    var hit = $('#pipHit'), bubble = $('#pipBubble'), art = $('.pip-wrap .pip-art');
+    if (!hit || !bubble) return;
+    var lines = [
+      'Hi, I\'m Pip! Shh, the stars are sleeping.',
+      'I\'m a Junior Dream Engineer. I fix wobbly dreams.',
+      'Want a dream? Try the Dream Engine!',
+      'Forgotten dreams are my favourite kind.',
+      'Psst... the moon likes company.',
+      'Sleepy? Me too. Always a little.'
+    ];
+    var n = 0, hideTimer = null;
+    hit.addEventListener('click', function () {
+      bubble.textContent = lines[n % lines.length];
+      n++;
+      bubble.classList.add('show');
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function () { bubble.classList.remove('show'); }, 3400);
+      audio.chime();
+      if (art && !reduceMotion) {
+        art.classList.remove('wiggle'); void art.offsetWidth; art.classList.add('wiggle');
+      }
+    });
+  })();
+
+  /* ---------- Visit odometer (counts visits from THIS browser only) ---------- */
+  (function () {
+    var box = $('#odometer');
+    if (!box) return;
+    var visits = 1;
+    try {
+      visits = Number(localStorage.getItem('pip-visits')) || 0;
+      if (!sessionStorage.getItem('pip-counted')) {
+        visits += 1;
+        localStorage.setItem('pip-visits', String(visits));
+        sessionStorage.setItem('pip-counted', '1');
+      }
+      if (visits < 1) visits = 1;
+    } catch (err) { visits = 1; }
+    var text = String(Math.min(visits, 999999));
+    while (text.length < 6) text = '0' + text;
+    box.setAttribute('aria-label', 'Your visit number: ' + visits);
+    box.innerHTML = '';
+    var wheels = [];
+    text.split('').forEach(function (d) {
+      var w = document.createElement('span'); w.className = 'wheel';
+      var col = document.createElement('span'); col.className = 'wheel-col';
+      for (var n = 0; n <= 9; n++) { var c = document.createElement('span'); c.textContent = n; col.appendChild(c); }
+      w.appendChild(col); box.appendChild(w); wheels.push([col, Number(d)]);
+    });
+    function roll() { wheels.forEach(function (p, i) { setTimeout(function () { p[0].style.transform = 'translateY(' + (-p[1] * 10) + '%)'; }, reduceMotion ? 0 : 150 * i); }); }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (en) { if (en[0].isIntersecting) { roll(); io.disconnect(); } }, { threshold: 0.4 });
+      io.observe(box);
+    } else { roll(); }
+  })();
+
+  /* ---------- Welcome-back note from Pip ---------- */
+  (function () {
+    var note = $('#welcomeNote');
+    if (!note) return;
+    var visits = 1;
+    try { visits = Number(localStorage.getItem('pip-visits')) || 1; } catch (err) { visits = 1; }
+    var text;
+    if (visits <= 1) {
+      text = 'First visit? Pip saved you a cosy spot.';
+    } else {
+      text = 'Welcome back! This is your visit no. ' + visits + '.';
+      if (shelf.length) text += ' Pip is keeping ' + shelf.length + (shelf.length === 1 ? ' dream' : ' dreams') + ' safe for you.';
+    }
+    note.textContent = text;
+    note.hidden = false;
+  })();
 
   /* ---------- 11. Magical transition into the Dream Engine ---------- */
   var portal = $('#portal');
