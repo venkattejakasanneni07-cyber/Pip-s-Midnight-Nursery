@@ -1,12 +1,21 @@
-import { createClient } from
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/+esm';
-
 // Project URL (no /rest/v1/ at the end) and the PUBLISHABLE key.
 // This key is safe in the browser because Row Level Security protects the table.
 const SUPABASE_URL = 'https://obvmloxxjfvpuxynetuh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_WP9pxlm-1Lsa5mNbQq6EBQ_LPpUrHto';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_LIB = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/+esm';
+
+// The Supabase library is only downloaded when the visitor scrolls near the
+// guestbook (or presses send), so it never slows down the first page load.
+let clientPromise = null;
+function getClient() {
+  if (!clientPromise) {
+    clientPromise = import(SUPABASE_LIB).then(({ createClient }) =>
+      createClient(SUPABASE_URL, SUPABASE_KEY)
+    );
+  }
+  return clientPromise;
+}
 
 const form = document.querySelector('#guestbookForm');
 const nameInput = document.querySelector('#guestName');
@@ -45,12 +54,18 @@ function formatDate(iso) {
 async function loadWishes() {
   status.textContent = 'Loading dreams...';
 
-  const { data, error } = await supabase
+  let data, error;
+  try {
+    const supabase = await getClient();
+    ({ data, error } = await supabase
     .from('dream_guestbook')
     .select('id, display_name, wish, created_at')
     .eq('approved', true)
     .order('created_at', { ascending: false })
-    .limit(30);
+    .limit(30));
+  } catch (e) {
+    error = e;
+  }
 
   if (error) {
     console.error('Could not load wishes:', error);
@@ -102,6 +117,7 @@ form.addEventListener('submit', async (event) => {
   status.textContent = 'Sending your dream...';
 
   try {
+    const supabase = await getClient();
     const { error } = await supabase
       .from('dream_guestbook')
       .insert([{ display_name, wish }]);
@@ -121,4 +137,17 @@ form.addEventListener('submit', async (event) => {
 });
 
 updateCounts();
-loadWishes();
+
+// Load the wishes when the guestbook is close to the screen.
+const guestbookSection = document.querySelector('#guestbook');
+if ('IntersectionObserver' in window && guestbookSection) {
+  const observer = new IntersectionObserver((items) => {
+    if (items.some((i) => i.isIntersecting)) {
+      observer.disconnect();
+      loadWishes();
+    }
+  }, { rootMargin: '600px 0px' });
+  observer.observe(guestbookSection);
+} else {
+  loadWishes();
+}

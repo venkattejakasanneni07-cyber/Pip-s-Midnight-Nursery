@@ -37,10 +37,23 @@
     }
     container.appendChild(frag);
   }
-  var starCount = window.innerWidth < 700 ? 45 : 90;
+  /* Fewer stars at start; the two lower sky layers are only built when they get close to the screen
+     (every star runs a CSS animation, so 200 at once slowed the first load). */
+  function lazyStars(container, count) {
+    if (!container) return;
+    if (!('IntersectionObserver' in window)) { makeStars(container, count); return; }
+    var io = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) {
+        io.disconnect();
+        makeStars(container, count);
+      }
+    }, { rootMargin: '400px 0px' });
+    io.observe(container);
+  }
+  var starCount = window.innerWidth < 700 ? 30 : 60;
   makeStars($('#heroStars'), starCount);
-  makeStars($('#engineStars'), 50);
-  makeStars($('#endStars'), 60);
+  lazyStars($('#engineStars'), 40);
+  lazyStars($('#endStars'), 45);
 
   /* If a real file exists at data-asset, swap the built-in drawing for it.
      If the file is missing, nothing happens and the drawing stays. */
