@@ -746,3 +746,54 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pip-eyes { position: absolute; inset: 0; pointer-events: none; }
 .pip-eye { position: absolute; width: 6.75%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, var(--patch) 0, var(--patch) 74%, transparent 100%); }
 .pip-glint { position: absolute; left: 50%; top: 50%; width: 37%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 42% 38%, #FFFBE6 0, #FFEDB0 55%, #F8D883 100%); box-shadow: 0 0 7px 2px rgba(255, 214, 120, .5); transform: translate(calc(-50% + var(--ex, 0) * 60%), calc(-50% + var(--ey, 0) * 60%)); transition: transform .16s ease-out; }
+
+#guestbook {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4rem 1.25rem;
+  color: #f4ecff;
+  text-align: center;
+}
+#guestbook h2 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin-bottom: .5rem; }
+#guestbookForm {
+  display: grid;
+  gap: .6rem;
+  text-align: left;
+  margin-top: 1.5rem;
+}
+#guestbookForm input,
+#guestbookForm textarea {
+  width: 100%;
+  padding: .75rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: rgba(255, 255, 255, .08);
+  color: inherit;
+  font: inherit;
+}
+#guestbookForm button {
+  padding: .8rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #f6d98b;
+  color: #2a2350;
+  font-weight: 700;
+  cursor: pointer;
+}
+#guestbookForm button:disabled { opacity: .6; cursor: wait; }
+#guestbookStatus { min-height: 1.4em; font-size: .95rem; }
+#guestbookEntries {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  display: grid;
+  gap: .8rem;
+  text-align: left;
+}
+#guestbookEntries li {
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(246, 217, 139, .35);
+}
+#guestbookEntries p { margin: .3rem 0 0; }
