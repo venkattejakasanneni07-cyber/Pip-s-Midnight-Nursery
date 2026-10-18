@@ -717,5 +717,39 @@
   <noscript><p class="noscript">Pip's nursery uses a little JavaScript to come alive. Please turn it on and come back.</p></noscript>
 
   <script src="script.js"></script>
+  
+<section id="guestbook" class="wrap">
+  <h2>Dreams left for Pip ✨</h2>
+  <p>Leave a little wish in Pip's night sky.</p>
+
+  <form id="guestbookForm">
+    <label for="guestName">Your name</label>
+    <input
+      id="guestName"
+      type="text"
+      maxlength="30"
+      required
+      autocomplete="name"
+      placeholder="What should Pip call you?"
+    />
+
+    <label for="guestWish">Your wish</label>
+    <textarea
+      id="guestWish"
+      maxlength="280"
+      required
+      rows="3"
+      placeholder="Leave a little dream..."
+    ></textarea>
+
+    <button type="submit">Leave a dream ✨</button>
+    <p id="guestbookStatus" role="status" aria-live="polite"></p>
+  </form>
+
+  <ul id="guestbookEntries" aria-live="polite"></ul>
+</section>
+
+<script type="module" src="./guestbook.js"></script>
+
 </body>
 </html>
