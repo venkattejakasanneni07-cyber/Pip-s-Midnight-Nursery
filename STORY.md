@@ -12,4 +12,6 @@ A few small details reward curious visitors: a hidden constellation in the hero 
 
 I used plain HTML, CSS and JavaScript so I could understand every line. I built the site with the help of an AI assistant (Claude), and then tested it myself on desktop and phone sizes, with keyboard only, and with reduced motion switched on. The Pip, lantern and music-box artwork comes from the official haX Creator Asset Pack; everything else is original SVG and code. Credits are in the page footer.
 
-What I would add next: a guestbook, a returning-visitor greeting from Pip, and more dream parts so every dream feels even more unique.
+For the legendary tier I gave Pip a memory and a voice. Pip remembers your name, how many times you have visited and your last dream, and greets you by the time of day. You can also chat with Pip: it answers in character using simple rules written by hand (no server, and it is not a real AI). I also tuned loading speed with non-blocking fonts and smaller images.
+
+What I would add next: a real guestbook with a backend, and more dream parts so every dream feels even more unique.

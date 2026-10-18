@@ -50,8 +50,11 @@
     img.onload = function () {
       img.alt = box.getAttribute('data-alt') || '';
       img.decoding = 'async';
+      img.width = img.naturalWidth;     /* real size lets the browser reserve space (no layout shift) */
+      img.height = img.naturalHeight;
       box.innerHTML = '';
       box.appendChild(img);
+      box.dispatchEvent(new CustomEvent('art:ready'));
     };
     img.onerror = function () { /* keep the SVG placeholder */ };
     img.src = src;
@@ -600,6 +603,8 @@
       btn.setAttribute('aria-pressed', String(on));
       btn.setAttribute('aria-label', on ? 'Mute all sound' : 'Turn sound on');
       if (label) label.textContent = on ? 'Sound on' : 'Sound off';
+      if (!on) { stopVoice(); if ('speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } } }
+      document.dispatchEvent(new CustomEvent('pip:sound'));
     }
     function stopAmbient() { clearInterval(timer); ambient = false; }
     function startAmbient() { clearInterval(timer); ambient = true; step = 0; tick(); timer = setInterval(tick, 650); }
@@ -644,6 +649,134 @@
       note(N[scale[Math.floor(Math.random() * scale.length)]], 0.45, 0.22);
     }
 
+    /* Pip's baby voice: no real words, just cute babble made with the Web Audio API.
+       Each syllable is a tiny chirp on a pentatonic scale, so the reply sounds like a small tune.
+       The mood of the reply changes the tune: questions rise, "!" sparkles, sleepy replies hum a lullaby. */
+    var VS = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];   /* C5 D5 E5 G5 A5 C6 D6 E6 */
+    var bus = null;
+    function canSpeak() { return supported; }
+    function stopVoice() {
+      if (!bus || !ctx) return;
+      var b = bus; bus = null;
+      try { b.gain.cancelScheduledValues(ctx.currentTime); b.gain.setTargetAtTime(0, ctx.currentTime, 0.02); } catch (e) { /* ignore */ }
+      setTimeout(function () { try { b.disconnect(); } catch (e) { /* ignore */ } }, 250);
+    }
+    function seedFrom(text) {
+      var h = 2166136261;
+      for (var i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+      return function () { h += 0x6D2B79F5; var t = Math.imul(h ^ (h >>> 15), 1 | h); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    }
+    /* one chirp: a little "ba" / "wa" sound (chirps up, vowel-like filter opens) or a soft bell for the ending tune */
+    function chirp(t, f, dur, vol, out, bell) {
+      var g = ctx.createGain(), o1 = ctx.createOscillator();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o1.type = bell ? 'sine' : 'triangle';
+      if (bell) {
+        o1.frequency.setValueAtTime(f, t);
+      } else {
+        o1.frequency.setValueAtTime(f * 0.9, t);
+        o1.frequency.exponentialRampToValueAtTime(f, t + 0.035);
+      }
+      o1.connect(g);
+      if (!bell) {
+        var o2 = ctx.createOscillator(), flt = ctx.createBiquadFilter(), g2 = ctx.createGain();
+        o2.type = 'sawtooth';
+        o2.frequency.setValueAtTime(f * 0.9, t);
+        o2.frequency.exponentialRampToValueAtTime(f, t + 0.035);
+        flt.type = 'bandpass'; flt.Q.value = 3;
+        flt.frequency.setValueAtTime(700, t);
+        flt.frequency.linearRampToValueAtTime(1700, t + dur * 0.7);
+        g2.gain.value = 0.55;
+        o2.connect(flt); flt.connect(g2); g2.connect(g);
+        o2.start(t); o2.stop(t + dur + 0.05);
+      }
+      g.connect(out);
+      o1.start(t); o1.stop(t + dur + 0.05);
+    }
+    function babble(text) {
+      if (!on || !ensure()) return false;
+      try {
+        stopVoice();
+        text = String(text);
+        var rnd = seedFrom(text);
+        var sleepy = /(sleep|yawn|goodnight|good night|snuggle|shh|breathe|lullaby|dream|stars)/i.test(text);
+        var ask = /\?\s*$/.test(text.trim());
+        var happy = /!/.test(text) && !sleepy;
+        var step = sleepy ? 0.3 : (happy ? 0.15 : 0.19);
+        var dur = sleepy ? 0.25 : (happy ? 0.11 : 0.14);
+        var hi = sleepy ? 4 : 7, idx = sleepy ? 2 : 3;
+        bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
+        var t = ctx.currentTime + 0.05, count = 0;
+        var words = text.replace(/[^\w\s'.,!?]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 10);
+        words.forEach(function (w) {
+          var syl = Math.min(2, Math.ceil(w.replace(/[^a-z]/gi, '').length / 5)) || 1;
+          for (var k = 0; k < syl && count < 16; k++, count++) {
+            idx += [-2, -1, -1, 0, 1, 1, 2][Math.floor(rnd() * 7)];
+            idx = Math.max(0, Math.min(hi, idx));
+            chirp(t, VS[idx], dur, 0.7, bus, false);
+            t += step;
+          }
+          t += /[.,!?]$/.test(w) ? 0.14 : 0.05;
+        });
+        /* the ending: a question rises, a happy reply sparkles, a sleepy one hums a falling lullaby, others settle down */
+        if (ask) {
+          chirp(t, VS[Math.min(7, idx + 1)], 0.16, 0.5, bus, false);
+          chirp(t + 0.17, VS[Math.min(7, idx + 3)], 0.3, 0.5, bus, false);
+        } else if (sleepy) {
+          [2, 1, 0].forEach(function (n, i) { chirp(t + 0.1 + i * 0.38, VS[n], 0.9, 0.35, bus, true); });
+        } else if (happy) {
+          [3, 4, 5, 7].forEach(function (n, i) { chirp(t + 0.05 + i * 0.09, VS[n], 0.35, 0.3, bus, true); });
+        } else {
+          chirp(t, VS[3], 0.18, 0.5, bus, false);
+          chirp(t + 0.2, VS[0], 0.4, 0.5, bus, false);
+        }
+        return true;
+      } catch (e) { return false; }
+    }
+
+    /* Pip's spoken words: the browser's own voice, pitched as high as it allows, with a tiny sparkle first.
+       Visitors can switch to the wordless babble instead. */
+    var mode = 'words', tts = null;
+    try { if (localStorage.getItem('pip-voice') === 'babble') mode = 'babble'; } catch (e) { /* ignore */ }
+    function ttsOK() { return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function'; }
+    function pickTts() {
+      if (!ttsOK()) return;
+      var list = window.speechSynthesis.getVoices() || [];
+      var en = list.filter(function (v) { return /^en/i.test(v.lang); });
+      tts = en.filter(function (v) { return /(google uk english female|google us english|samantha|zira|aria|jenny|karen|susan|female)/i.test(v.name); })[0] || en[0] || null;
+    }
+    if (ttsOK()) {
+      pickTts();
+      if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener('voiceschanged', pickTts);
+    }
+    function speakWords(text) {
+      try {
+        window.speechSynthesis.cancel();
+        var u = new window.SpeechSynthesisUtterance(String(text).replace(/…|\.\.\./g, ',').replace(/[“”"]/g, ''));
+        u.lang = (tts && tts.lang) || 'en-US';
+        if (tts) u.voice = tts;
+        u.pitch = 2;
+        u.rate = 1.05;
+        u.volume = 1;
+        window.speechSynthesis.speak(u);
+        return true;
+      } catch (e) { return false; }
+    }
+    function speak(text) {
+      if (!on || !ensure()) return false;
+      if (mode === 'words' && ttsOK()) {
+        stopVoice();
+        bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
+        var t0 = ctx.currentTime + 0.02;
+        [3, 5, 7].forEach(function (n, i) { chirp(t0 + i * 0.07, VS[n], 0.25, 0.35, bus, true); });
+        return speakWords(text);
+      }
+      return babble(text);
+    }
+    function setMode(m) { mode = m === 'babble' ? 'babble' : 'words'; try { localStorage.setItem('pip-voice', mode); } catch (e) { /* ignore */ } }
+
     btn.addEventListener('click', function () {
       if (on) setOn(false); else setOn(true, true);
     });
@@ -653,7 +786,7 @@
       if (!document.hidden && on && ambient) timer = setInterval(tick, 650);
     });
     ui();
-    return { setOn: setOn, playPhrase: playPhrase, playNote: playNote, chime: chime };
+    return { setOn: setOn, wake: wake, speak: speak, canSpeak: canSpeak, ttsOK: ttsOK, getMode: function () { return mode; }, setMode: setMode, isOn: function () { return on; }, playPhrase: playPhrase, playNote: playNote, chime: chime };
   })();
 
   /* Click chimes (only audible when sound is on) */
@@ -760,6 +893,376 @@
   });
   renderShelf();
 
+  /* ---------- Tier 2: Dream Delivery map (the route draws as you scroll) ---------- */
+  (function () {
+    var map = $('#deliveryMap'), line = $('#routeLine'), marker = $('#routeMarker');
+    var stopsG = $('#routeStops'), note = $('#deliveryNote');
+    if (!map || !line || !marker || !stopsG || !line.getTotalLength) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var len = line.getTotalLength();
+    var stops = [
+      { f: 0,    name: 'Pip\'s Nursery',   say: 'Pip is packing a freshly mended dream at the nursery.' },
+      { f: 0.25, name: 'Cloud Kingdom',     say: 'Up through the Cloud Kingdom, where the pillows are the softest.' },
+      { f: 0.5,  name: 'Starlight Forest',  say: 'Tiptoeing past the glowing trees of the Starlight Forest.' },
+      { f: 0.75, name: 'Moon Garden',       say: 'Quietly crossing the Moon Garden. Nobody wake the moonflowers!' },
+      { f: 1,    name: 'Candy Planet',      say: 'Delivered! The dream has landed on the Candy-coloured Planet.' }
+    ];
+    line.style.strokeDasharray = len;
+    stops.forEach(function (st, i) {
+      var pt = line.getPointAtLength(len * st.f);
+      var side = Math.abs(pt.x - 220) < 12 ? (i % 2 === 0 ? 'right' : 'left') : (pt.x < 220 ? 'left' : 'right');
+      var g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'route-stop');
+      var dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', pt.x); dot.setAttribute('cy', pt.y); dot.setAttribute('r', 11);
+      var t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', side === 'left' ? pt.x - 24 : pt.x + 24);
+      t.setAttribute('y', pt.y + 6);
+      t.setAttribute('text-anchor', side === 'left' ? 'end' : 'start');
+      t.textContent = st.name;
+      g.appendChild(dot); g.appendChild(t);
+      stopsG.appendChild(g);
+      st.el = g;
+    });
+    var lastShown = -1;
+    function apply(p) {
+      line.style.strokeDashoffset = len * (1 - p);
+      var pt = line.getPointAtLength(len * p);
+      marker.setAttribute('transform', 'translate(' + pt.x + ' ' + pt.y + ')');
+      var current = 0;
+      stops.forEach(function (st, i) {
+        var lit = p >= st.f - 0.001;
+        st.el.classList.toggle('lit', lit);
+        if (lit) current = i;
+      });
+      if (current !== lastShown) { note.textContent = stops[current].say; lastShown = current; }
+    }
+    if (reduceMotion) { apply(1); return; }     /* reduced motion: show the finished route, no animation */
+    var ticking = false;
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        ticking = false;
+        var r = map.getBoundingClientRect();
+        var p = (window.innerHeight * 0.7 - r.top) / (r.height + window.innerHeight * 0.1);
+        apply(Math.max(0, Math.min(1, p)));
+      });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    apply(0); onScroll();
+  })();
+
+  /* ---------- Tier 2: Pip's pocket storybook (page-turn flip: buttons, swipe, arrow keys) ---------- */
+  (function () {
+    var book = $('#book'), prev = $('#bookPrev'), next = $('#bookNext'), count = $('#bookCount');
+    if (!book || !prev || !next || !count) return;
+    var pages = $$('.page', book), cur = 0, total = pages.length;
+    pages.forEach(function (p, i) { p.style.zIndex = String(total - i); });
+    function render() {
+      pages.forEach(function (p, i) {
+        p.classList.toggle('turned', i < cur);
+        p.setAttribute('aria-hidden', i === cur ? 'false' : 'true');
+      });
+      count.textContent = 'Page ' + (cur + 1) + ' of ' + total;
+      prev.setAttribute('aria-disabled', cur === 0 ? 'true' : 'false');
+      next.setAttribute('aria-disabled', cur === total - 1 ? 'true' : 'false');
+    }
+    function go(d) {
+      var n = Math.max(0, Math.min(total - 1, cur + d));
+      if (n === cur) return;
+      cur = n; render(); audio.chime();
+    }
+    prev.addEventListener('click', function () { go(-1); });
+    next.addEventListener('click', function () { go(1); });
+    book.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') { go(1); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { go(-1); e.preventDefault(); }
+    });
+    var startX = null;
+    book.addEventListener('pointerdown', function (e) { startX = e.clientX; });
+    book.addEventListener('pointerup', function (e) {
+      if (startX === null) return;
+      var dx = e.clientX - startX; startX = null;
+      if (dx < -40) go(1); else if (dx > 40) go(-1);
+    });
+    book.addEventListener('pointercancel', function () { startX = null; });
+    render();
+  })();
+
+  /* ---------- Tier 2: Pip's nightlight (a spotlight that reveals hidden wishes) ---------- */
+  (function () {
+    var stage = $('#nightlight'), wrap = $('#nlWishes'), countEl = $('#nlCount'), resetBtn = $('#nlReset');
+    if (!stage || !wrap || !countEl || !resetBtn) return;
+    var WORDS = ['a soft cloud', 'a warm lantern', 'a quiet lullaby', 'a moon hug', 'a sleepy sheep', 'a starry blanket'];
+    var wishes = [], found = 0, lx = 0, ly = 0, R = 95;
+    function size() { R = Math.max(60, Math.min(100, stage.clientWidth * 0.14)); stage.style.setProperty('--nl-r', R + 'px'); }
+    function message() {
+      countEl.textContent = found >= WORDS.length ? 'You found all six wishes! Pip says sweet dreams.' : 'Wishes found: ' + found + ' of ' + WORDS.length;
+    }
+    function build() {
+      wrap.innerHTML = ''; wishes = []; found = 0;
+      WORDS.forEach(function (word) {
+        var x, y, tries = 0, ok;
+        do {
+          x = rand(0.18, 0.82); y = rand(0.18, 0.82); ok = true; tries++;
+          wishes.forEach(function (w) { var dx = (w.x - x) * 2, dy = w.y - y; if (Math.sqrt(dx * dx + dy * dy) < 0.4) ok = false; });
+        } while (!ok && tries < 60);
+        var el = document.createElement('div');
+        el.className = 'nl-wish';
+        el.style.left = (x * 100) + '%'; el.style.top = (y * 100) + '%';
+        el.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg><span></span>';
+        el.lastChild.textContent = word;
+        wrap.appendChild(el);
+        wishes.push({ x: x, y: y, el: el, found: false });
+      });
+      message();
+    }
+    function check() {
+      var w = stage.clientWidth, h = stage.clientHeight, hit = false;
+      wishes.forEach(function (ws) {
+        if (ws.found) return;
+        var dx = ws.x * w - lx, dy = ws.y * h - ly;
+        if (dx * dx + dy * dy < (R * 0.75) * (R * 0.75)) { ws.found = true; ws.el.classList.add('found'); found++; hit = true; }
+      });
+      if (hit) { message(); audio.chime(); }
+    }
+    function setLight(x, y, quiet) {
+      lx = Math.max(0, Math.min(stage.clientWidth, x));
+      ly = Math.max(0, Math.min(stage.clientHeight, y));
+      stage.style.setProperty('--lx', lx + 'px');
+      stage.style.setProperty('--ly', ly + 'px');
+      if (!quiet) check();
+    }
+    function fromPointer(e) {
+      var r = stage.getBoundingClientRect();
+      stage.classList.add('moved');
+      setLight(e.clientX - r.left, e.clientY - r.top);
+    }
+    stage.addEventListener('pointermove', fromPointer, { passive: true });
+    stage.addEventListener('pointerdown', fromPointer, { passive: true });
+    stage.addEventListener('keydown', function (e) {
+      var step = 32, dx = 0, dy = 0;
+      if (e.key === 'ArrowLeft') dx = -step; else if (e.key === 'ArrowRight') dx = step;
+      else if (e.key === 'ArrowUp') dy = -step; else if (e.key === 'ArrowDown') dy = step;
+      else return;
+      e.preventDefault();
+      stage.classList.add('moved');
+      setLight(lx + dx, ly + dy);
+    });
+    resetBtn.addEventListener('click', function () { build(); setLight(stage.clientWidth / 2, stage.clientHeight / 2, true); });
+    window.addEventListener('resize', function () { size(); setLight(lx, ly, true); });
+    size(); build(); setLight(stage.clientWidth / 2, stage.clientHeight / 2, true);
+  })();
+
+  /* ---------- Tier 2: mini-game, catch the falling dreams ---------- */
+  (function () {
+    var cv = $('#gameCanvas'), startBtn = $('#gameStart'), status = $('#gameStatus');
+    if (!cv || !cv.getContext || !startBtn || !status) return;
+    var W = 400, H = 320, DPR = 2, ROUND = 30;
+    cv.width = W * DPR; cv.height = H * DPR;
+    var g = cv.getContext('2d');
+    g.scale(DPR, DPR);
+    var mode = 'idle', timeLeft = ROUND, score = 0, items = [], pops = [], spawnT = 0.5;
+    var cloud = { x: W / 2, target: W / 2, w: 88, h: 34 };
+    var keys = { left: false, right: false };
+    var best = 0;
+    try { best = Number(localStorage.getItem('pip-game-best')) || 0; } catch (err) { /* ignore */ }
+    var bg = [];
+    for (var i = 0; i < 40; i++) bg.push({ x: rand(0, W), y: rand(0, H - 60), r: rand(0.6, 1.6), p: rand(0, 6) });
+
+    function setStatus(t) { status.textContent = t; }
+    function start() {
+      mode = 'playing'; timeLeft = ROUND; score = 0; items = []; pops = []; spawnT = 0.4;
+      cloud.x = cloud.target = W / 2;
+      startBtn.textContent = 'Restart';
+      setStatus("Go! Slide Pip's cloud to catch the falling dreams.");
+      try { cv.focus({ preventScroll: true }); } catch (err) { /* ignore */ }
+    }
+    function end() {
+      mode = 'over';
+      var newBest = score > best;
+      if (newBest) { best = score; try { localStorage.setItem('pip-game-best', String(best)); } catch (err) { /* ignore */ } }
+      startBtn.textContent = 'Play again';
+      setStatus('Time is up! You caught ' + score + (score === 1 ? ' dream. ' : ' dreams. ') + (newBest && score > 0 ? 'That is your best yet! ' : 'Best: ' + best + '. ') + 'Sweet dreams.');
+    }
+    function step(dt) {
+      timeLeft -= dt;
+      if (timeLeft <= 0) { timeLeft = 0; end(); return; }
+      var elapsed = ROUND - timeLeft;
+      if (keys.left) cloud.target -= 300 * dt;
+      if (keys.right) cloud.target += 300 * dt;
+      cloud.target = Math.max(cloud.w / 2, Math.min(W - cloud.w / 2, cloud.target));
+      cloud.x += (cloud.target - cloud.x) * Math.min(1, dt * 12);
+      spawnT -= dt;
+      if (spawnT <= 0) {
+        spawnT = Math.max(0.42, 0.95 - elapsed * 0.012);
+        items.push({ x: rand(20, W - 20), y: -14, vy: rand(70, 115) + elapsed * 1.6, r: 11, kind: Math.random() < 0.2 ? 'orb' : 'star', ph: rand(0, 6) });
+      }
+      var top = H - 52;
+      for (var k = items.length - 1; k >= 0; k--) {
+        var it = items[k];
+        it.y += it.vy * dt;
+        if (it.y + it.r >= top && it.y - it.r <= top + 24 && Math.abs(it.x - cloud.x) < cloud.w / 2 + it.r * 0.4) {
+          score += it.kind === 'orb' ? 2 : 1;
+          pops.push({ x: it.x, y: top, t: 0 });
+          audio.chime();
+          items.splice(k, 1);
+        } else if (it.y > H + 20) {
+          items.splice(k, 1);
+        }
+      }
+      for (var q = pops.length - 1; q >= 0; q--) { pops[q].t += dt; if (pops[q].t > 0.5) pops.splice(q, 1); }
+    }
+    function star(x, y, r, rot) {
+      g.beginPath();
+      for (var n = 0; n < 10; n++) {
+        var rad = n % 2 === 0 ? r : r * 0.45, a = rot + n * Math.PI / 5 - Math.PI / 2;
+        g.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad);
+      }
+      g.closePath(); g.fill();
+    }
+    function draw(ts) {
+      var sky = g.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, '#1d2250'); sky.addColorStop(1, '#4a4a8c');
+      g.fillStyle = sky; g.fillRect(0, 0, W, H);
+      bg.forEach(function (s) {
+        g.globalAlpha = reduceMotion ? 0.7 : 0.35 + 0.35 * Math.sin(ts / 700 + s.p);
+        g.fillStyle = '#FFF7ED'; g.beginPath(); g.arc(s.x, s.y, s.r, 0, 6.3); g.fill();
+      });
+      g.globalAlpha = 1;
+      items.forEach(function (it) {
+        g.shadowColor = it.kind === 'orb' ? 'rgba(216,201,240,.9)' : 'rgba(245,213,138,.9)'; g.shadowBlur = 12;
+        g.fillStyle = it.kind === 'orb' ? '#D8C9F0' : '#F5D58A';
+        if (it.kind === 'orb') { g.beginPath(); g.arc(it.x, it.y, it.r, 0, 6.3); g.fill(); }
+        else star(it.x, it.y, it.r, reduceMotion ? 0 : ts / 900 + it.ph);
+        g.shadowBlur = 0;
+      });
+      pops.forEach(function (p) {
+        g.globalAlpha = 1 - p.t / 0.5; g.strokeStyle = '#F5D58A'; g.lineWidth = 2;
+        g.beginPath(); g.arc(p.x, p.y, 8 + p.t * 40, 0, 6.3); g.stroke();
+      });
+      g.globalAlpha = 1;
+      var cx = cloud.x, cy = H - 40;
+      g.fillStyle = '#FFF7ED'; g.shadowColor = 'rgba(255,247,237,.6)'; g.shadowBlur = 14;
+      g.beginPath();
+      g.arc(cx - 26, cy + 2, 14, 0, 6.3); g.arc(cx, cy - 6, 19, 0, 6.3); g.arc(cx + 26, cy + 2, 14, 0, 6.3);
+      g.fill();
+      g.fillRect(cx - 28, cy + 2, 56, 14);
+      g.shadowBlur = 0;
+      g.fillStyle = '#252642';
+      g.beginPath(); g.arc(cx - 6, cy + 2, 2.2, 0, 6.3); g.arc(cx + 6, cy + 2, 2.2, 0, 6.3); g.fill();
+      g.strokeStyle = '#252642'; g.lineWidth = 1.6; g.beginPath(); g.arc(cx, cy + 5, 4, 0.2, Math.PI - 0.2); g.stroke();
+      g.font = '700 16px "Nunito", system-ui, sans-serif'; g.textBaseline = 'top';
+      g.fillStyle = '#FFF7ED'; g.textAlign = 'left'; g.fillText('Dreams: ' + score, 12, 10);
+      g.textAlign = 'right'; g.fillText('Time: ' + Math.ceil(timeLeft), W - 12, 10);
+      if (mode !== 'playing') {
+        g.fillStyle = 'rgba(24,25,51,.62)'; g.fillRect(0, 0, W, H);
+        g.textAlign = 'center'; g.fillStyle = '#F5D58A'; g.font = 'italic 700 24px Georgia, serif';
+        g.fillText(mode === 'over' ? 'Sweet dreams! You caught ' + score : 'Ready when you are', W / 2, H / 2 - 24);
+        g.font = '700 15px "Nunito", system-ui, sans-serif'; g.fillStyle = '#FFF7ED';
+        g.fillText(mode === 'over' ? 'Best: ' + best + '. Press Play again.' : 'Press Start' + (best ? '. Best: ' + best : ''), W / 2, H / 2 + 12);
+      }
+    }
+    var last = 0, raf = 0, onScreen = true;
+    function frame(ts) {
+      raf = requestAnimationFrame(frame);
+      var dt = Math.min(0.05, Math.max(0, (ts - last) / 1000)); last = ts;
+      if (mode === 'playing') step(dt);
+      draw(ts);
+    }
+    function sync() {
+      var shouldRun = onScreen && !document.hidden;
+      if (shouldRun && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
+      else if (!shouldRun && raf) { cancelAnimationFrame(raf); raf = 0; }
+    }
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) { onScreen = en[0].isIntersecting; sync(); }, { threshold: 0.05 }).observe(cv);
+    }
+    document.addEventListener('visibilitychange', sync);
+    function fromPointer(e) {
+      var r = cv.getBoundingClientRect();
+      cloud.target = Math.max(cloud.w / 2, Math.min(W - cloud.w / 2, (e.clientX - r.left) / r.width * W));
+    }
+    cv.addEventListener('pointermove', fromPointer, { passive: true });
+    cv.addEventListener('pointerdown', fromPointer, { passive: true });
+    cv.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.left = true; e.preventDefault(); }
+      else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.right = true; e.preventDefault(); }
+      else if ((e.key === 'Enter' || e.key === ' ') && mode !== 'playing') { start(); e.preventDefault(); }
+    });
+    cv.addEventListener('keyup', function (e) {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+      else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+    });
+    cv.addEventListener('blur', function () { keys.left = keys.right = false; });
+    startBtn.addEventListener('click', start);
+    sync();
+  })();
+
+  /* ---------- Tier 1: Pip's eyes follow the pointer ----------
+     The official picture is never edited. Two small patches in the socket colour
+     cover the painted glints, and two new glints slide toward the pointer. The eyes
+     only appear when the real picture has loaded (not on the backup drawing) and
+     are skipped when the visitor prefers reduced motion. */
+  (function () {
+    if (reduceMotion) return;
+    var box = $('.pip-art');
+    if (!box) return;
+    /* centre of each painted glint in the 800 x 973 picture, plus the socket colour around it */
+    var EYES = [ { x: 350, y: 395, c: '#50322a' }, { x: 466, y: 367, c: '#7a5a52' } ];
+    var eyes = [], idleTimer = null, lastX = 0, lastY = 0, queued = false;
+
+    function build() {
+      if (box.querySelector('.pip-eyes') || !box.querySelector('img')) return;
+      var layer = document.createElement('div');
+      layer.className = 'pip-eyes';
+      layer.setAttribute('aria-hidden', 'true');
+      EYES.forEach(function (e) {
+        var el = document.createElement('span');
+        el.className = 'pip-eye';
+        el.style.left = (e.x / 8) + '%';
+        el.style.top = (e.y / 9.73) + '%';
+        el.style.setProperty('--patch', e.c);
+        el.innerHTML = '<i class="pip-glint"></i>';
+        layer.appendChild(el);
+        eyes.push(el);
+      });
+      box.appendChild(layer);
+    }
+    function look(x, y) {
+      eyes.forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) return;
+        var dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var k = Math.min(1, dist / 240);
+        el.style.setProperty('--ex', (dx / dist * k).toFixed(3));
+        el.style.setProperty('--ey', (dy / dist * k).toFixed(3));
+      });
+    }
+    function centre() { eyes.forEach(function (el) { el.style.setProperty('--ex', '0'); el.style.setProperty('--ey', '0'); }); }
+    function later(ms) { clearTimeout(idleTimer); idleTimer = setTimeout(centre, ms); }
+
+    box.addEventListener('art:ready', build);
+    build();
+
+    /* mouse or pen: the eyes follow the pointer anywhere on the page */
+    window.addEventListener('pointermove', function (e) {
+      if (e.pointerType === 'touch' || !eyes.length) return;
+      lastX = e.clientX; lastY = e.clientY;
+      if (!queued) { queued = true; requestAnimationFrame(function () { queued = false; look(lastX, lastY); }); }
+      later(4000);
+    }, { passive: true });
+    /* touch: a tap on the hero makes Pip look at your finger for a moment */
+    var heroEl = $('.hero');
+    if (heroEl) heroEl.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' || !eyes.length) return;
+      look(e.clientX, e.clientY); later(1500);
+    }, { passive: true });
+  })();
+
   /* ---------- Pip talks when you tap Pip ---------- */
   (function () {
     var hit = $('#pipHit'), bubble = $('#pipBubble'), art = $('.pip-wrap .pip-art');
@@ -825,21 +1328,259 @@
     } else { roll(); }
   })();
 
-  /* ---------- Welcome-back note from Pip ---------- */
+  /* ---------- Tier 3: Pip remembers the visitor (name, visits, last dream; kept in this browser only) ---------- */
+  var memory = (function () {
+    var NAME_KEY = 'pip-name';
+    var name = '';
+    function clean(s) { return String(s || '').replace(/[<>\u0000-\u001F]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16); }
+    try { name = clean(localStorage.getItem(NAME_KEY)); } catch (err) { name = ''; }
+
+    function visits() {
+      try { return Number(localStorage.getItem('pip-visits')) || 1; } catch (err) { return 1; }
+    }
+    function dayPart() {
+      var h = new Date().getHours();
+      if (h < 5) return 'Sleepy hello';
+      if (h < 12) return 'Good morning';
+      if (h < 17) return 'Good afternoon';
+      if (h < 21) return 'Good evening';
+      return 'Good night';
+    }
+    function lastDream() { return shelf.length ? shelf[0].title : ''; }
+    function greeting() {
+      var v = visits(), who = name ? ', ' + name : '';
+      var text;
+      if (v <= 1) {
+        text = 'Hello' + who + '! First visit? Pip saved you a cosy spot.';
+      } else {
+        text = dayPart() + who + '! Welcome back, this is your visit no. ' + v + '.';
+        if (shelf.length) text += ' Pip kept your dream “' + lastDream() + '” safe.';
+      }
+      return text;
+    }
+    function set(v) {
+      name = clean(v);
+      try { if (name) localStorage.setItem(NAME_KEY, name); else localStorage.removeItem(NAME_KEY); } catch (err) { /* storage blocked: Pip remembers until the page closes */ }
+      document.dispatchEvent(new CustomEvent('pip:name'));
+      return name;
+    }
+    return { get name() { return name; }, set: set, clean: clean, greeting: greeting, visits: visits, lastDream: lastDream };
+  })();
+
+  /* Welcome note under the hero buttons */
   (function () {
     var note = $('#welcomeNote');
     if (!note) return;
-    var visits = 1;
-    try { visits = Number(localStorage.getItem('pip-visits')) || 1; } catch (err) { visits = 1; }
-    var text;
-    if (visits <= 1) {
-      text = 'First visit? Pip saved you a cosy spot.';
-    } else {
-      text = 'Welcome back! This is your visit no. ' + visits + '.';
-      if (shelf.length) text += ' Pip is keeping ' + shelf.length + (shelf.length === 1 ? ' dream' : ' dreams') + ' safe for you.';
+    function show() { note.textContent = memory.greeting(); note.hidden = false; }
+    show();
+    document.addEventListener('pip:name', show);
+  })();
+
+  /* ---------- Tier 3: Chat with Pip (rule-based dialogue in Pip's voice, no server) ---------- */
+  (function () {
+    var log = $('#chatLog'), form = $('#chatForm'), input = $('#chatInput'), chips = $('#chatChips');
+    var nameForm = $('#nameForm'), nameInput = $('#nameInput'), nameStatus = $('#nameStatus'), forgetBtn = $('#forgetBtn');
+    if (!log || !form || !input || !nameForm || !nameInput || !forgetBtn) return;
+
+    function fill(s) { return s.replace(/\{name\}/g, memory.name || 'friend'); }
+
+    /* Each rule: a pattern to look for, and a few replies Pip takes in turn. Order matters: first match wins. */
+    var rules = [
+      { re: /(my name is|call me|you can call me)\s+([^.!?,]{1,16})/, learn: true },
+      { re: /\b(bye|goodbye|good night|goodnight|night night|gotta go|see you)\b/, say: [
+        'Goodnight, {name}. I will keep the nightlight on for you.',
+        'Sweet dreams, {name}! Come back soon, I will save you a cloud.'] },
+      { re: /\b(thanks|thank you|thx)\b/, say: [
+        'You are so welcome, {name}. It makes my little star glow.',
+        'Aww. Thank you for being kind. Kind people are my favourite.'] },
+      { re: /(who made you|are you (a |an )?(real|ai|robot|bot|human)|chatgpt|claude)/, say: [
+        'I am Pip, a storybook character on this website. I follow simple rules, so I am not a real baby, but I do my best to be cosy.'] },
+      { re: /(who are you|what are you|your name|about you|introduce)/, say: [
+        'I am Pip, a Junior Dream Engineer! I am a baby with a little skull face, a star nightcap and heart pyjamas. I mend forgotten dreams.',
+        'Pip, at your service. Small enough to hide in a teacup, big enough to hold a dream.'] },
+      { re: /(how are you|how do you feel|you ok|you okay)/, say: [
+        'A little sleepy, a little sparkly. Mostly happy that you are here, {name}.'] },
+      { re: /(nightmare|bad dream|scared|afraid|frightened|spooky|monster)/, say: [
+        'Oh, {name}. Nothing in my nursery is scary, I promise. Even the shadows are just sleepy clouds. Take a slow breath with me. In... and out.',
+        'Bad dreams are only dreams that need mending. That is my job! Think of something warm, like a lantern or a cuddly cloud.'] },
+      { re: /(can'?t sleep|cannot sleep|insomnia|awake|trouble sleeping|not sleepy)/, say: [
+        'Shh, {name}. Try counting stars with me: one tiny star, two tiny stars, three tiny stars... Tap the Dreambox for a lullaby.',
+        'Close your eyes and picture my moon lantern glowing softly. Breathe in slowly, breathe out slowly. Goodnight stars.'] },
+      { re: /(tired|sleepy|sleep|bedtime|nap|yawn)/, say: [
+        'Sleepy is my favourite feeling. Snuggle in, {name}, the nursery is warm.',
+        'Yaaawn. Now you made me sleepy too. Five more minutes of stars?'] },
+      { re: /(sing|lullaby|music|song|hum)/, say: [
+        'La la la, twinkle twinkle... I am better at fixing dreams than singing. Open the Unicorn Dreambox in Creations and play the star keys instead!'] },
+      { re: /(joke|funny|make me laugh|riddle)/, say: [
+        'Why did the moon skip dinner? It was already full!',
+        'What do dreams wear to bed? Pyjamas, of course. Just like me!',
+        'What is a star’s favourite snack? Moon pies, naturally.',
+        'Why was the pillow so happy? It had a soft spot for everyone.'] },
+      { re: /(dream)/, say: [
+        'I dream about jars full of glowing dreams, floating clouds and a music box that never runs out. Want one of your own? Try the Dream Engine!',
+        'My favourite dreams are the forgotten ones. They are shy, so I whisper to them until they come out.'] },
+      { re: /(lantern|light|nightlight)/, say: [
+        'My Moonlight Lantern turns dark corners into tiny constellations. Try finding the hidden wishes in the nightlight game!'] },
+      { re: /(music box|unicorn|dreambox)/, say: [
+        'The Unicorn Dreambox keeps the happiest dreams safe. Open it in Creations and play the five star keys.'] },
+      { re: /(pillow|cloud|bed|blanket)/, say: [
+        'Cloud Pillow No. 7 grows a brand new dream landscape every night. Number seven is my softest one.'] },
+      { re: /(moon)/, say: [
+        'The moon is my friend. Shh, I heard it is only pretending to be sleepy.'] },
+      { re: /(star|stars|sparkle)/, say: [
+        'Stars are tiny night lights that blink hello. I have a golden one that I hold when I am nervous.'] },
+      { re: /(skull|bones|face|scary looking)/, say: [
+        'Yes, I have a skull face! It is just my friendliest face. Nothing spooky about a baby who loves lullabies.'] },
+      { re: /(game|play|catch|fun)/, say: [
+        'Let us play! Scroll to “Catch the falling dreams”, or hunt for my wishes in the dark.'] },
+      { re: /(story|book|tell me)/, say: [
+        'Ooh, a story! Turn the pages of my pocket storybook, or scroll up to see how my nursery began.'] },
+      { re: /(favou?rite|like best|love most)/, say: [
+        'My favourite things are my moon lantern, my lullaby music box, and anyone who stops by to say hello.'] },
+      { re: /(colou?r)/, say: [
+        'Soft lavender, blush pink and moon gold. The colours of a good night sky.'] },
+      { re: /(eat|food|hungry|snack|cookie|milk)/, say: [
+        'Warm milk and a moon-shaped cookie, please. Crumbs for the stars!'] },
+      { re: /(love you|like you|you are cute|you.re cute|cute)/, say: [
+        'Aww, {name}! I love you too, in a sleepy, squishy, starry way.'] },
+      { re: /(secret|easter egg|hidden)/, say: [
+        'A secret? Shh. I heard the moon likes company, and that curious people are my favourite kind.'] },
+      { re: /(sound|mute|volume|loud|quiet)/, say: [
+        'Sound is off until you turn it on, so the nursery stays quiet. The Sound button is at the top right.'] },
+      { re: /(help|what can (you|i) do|what do you do)/, say: [
+        'You can ask me about dreams, sleep, my creations, or ask for a joke. You can also make a dream in the Dream Engine!'] },
+      { re: /\b(hi|hello|hey|hiya|howdy|namaste|yo)\b|good (morning|afternoon|evening)/, say: [
+        'Hello, {name}! I was just tucking a dream in. Shh, softly now.',
+        'Hi again! The stars were just asking about you.'] }
+    ];
+    var fallbacks = [
+      'Hmm, I am not sure I understood, {name}. I am only a sleepy baby! Try asking about dreams, sleep, or tell me a joke.',
+      'The stars did not quite catch that. Ask me who I am, or tap one of the little suggestions.',
+      'Yaaawn... could you say that another way? I like questions about dreams and lullabies.'
+    ];
+    var used = {}, fb = 0;
+
+    function addMsg(who, text, extra) {
+      var p = document.createElement('p');
+      p.className = 'msg ' + (who === 'pip' ? 'msg-pip' : 'msg-you') + (extra ? ' ' + extra : '');
+      var w = document.createElement('span');
+      w.className = 'msg-who';
+      w.textContent = who === 'pip' ? 'Pip' : (memory.name || 'You');
+      p.appendChild(w);
+      p.appendChild(document.createTextNode(text));
+      log.appendChild(p);
+      while (log.children.length > 40) log.removeChild(log.firstChild);
+      log.scrollTop = log.scrollHeight;
+      return p;
     }
-    note.textContent = text;
-    note.hidden = false;
+
+    function answer(text) {
+      var t = text.toLowerCase();
+      for (var i = 0; i < rules.length; i++) {
+        var m = t.match(rules[i].re);
+        if (!m) continue;
+        if (rules[i].learn) {
+          var nm = memory.clean(text.slice(t.indexOf(m[0]) + m[1].length).replace(/^[\s:,-]+/, '').split(/[.!?,]/)[0]);
+          if (!nm) return fallbacks[0];
+          memory.set(nm);
+          return 'Nice to meet you, ' + memory.name + '! Pip will remember your name.';
+        }
+        var arr = rules[i].say;
+        used[i] = ((used[i] === undefined ? -1 : used[i]) + 1) % arr.length;
+        return fill(arr[used[i]]);
+      }
+      fb = (fb + 1) % fallbacks.length;
+      return fill(fallbacks[fb]);
+    }
+
+    function pipSays(text) {
+      var typing = addMsg('pip', 'Pip is thinking…', 'msg-typing');
+      typing.setAttribute('aria-hidden', 'true');
+      var delay = reduceMotion ? 0 : 650;
+      setTimeout(function () {
+        typing.remove();
+        addMsg('pip', text);
+        if (!audio.speak(text)) audio.chime();
+      }, delay);
+    }
+
+    function send(text) {
+      text = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+      if (!text) return;
+      addMsg('you', text);
+      pipSays(answer(text));
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = input.value;
+      input.value = '';
+      send(v);
+    });
+    chips.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-say]');
+      if (b) send(b.getAttribute('data-say'));
+    });
+
+    /* name form: Pip remembers the visitor's name in this browser */
+    function syncName() {
+      var has = !!memory.name;
+      forgetBtn.hidden = !has;
+      if (document.activeElement !== nameInput) nameInput.value = memory.name;
+    }
+    nameForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var n = memory.clean(nameInput.value);
+      if (!n) { nameStatus.textContent = 'Type a name first, or Pip will just say “friend”.'; return; }
+      memory.set(n);
+      nameInput.value = memory.name;
+      nameStatus.textContent = 'Saved! Pip will remember you, ' + memory.name + '.';
+      pipSays('Nice to meet you, ' + memory.name + '! I will remember you next time.');
+    });
+    forgetBtn.addEventListener('click', function () {
+      memory.set('');
+      nameInput.value = '';
+      nameStatus.textContent = 'Pip forgot your name. Fresh start!';
+      pipSays('Poof! I forgot your name. Who are you again, little stranger?');
+      forgetBtn.hidden = true;
+    });
+    document.addEventListener('pip:name', syncName);
+    syncName();
+
+    /* voice button: mirrors the header Sound switch, so mute always works */
+    var voiceBtn = $('#voiceBtn');
+    if (voiceBtn) {
+      if (!audio.canSpeak()) {
+        voiceBtn.hidden = true;
+      } else {
+        var syncVoice = function () {
+          var on = audio.isOn();
+          voiceBtn.setAttribute('aria-pressed', String(on));
+          voiceBtn.textContent = on ? 'Pip\u2019s voice: on (tap to mute)' : 'Hear Pip\u2019s voice';
+        };
+        voiceBtn.addEventListener('click', function () {
+          if (audio.isOn()) { audio.setOn(false); } else { audio.wake(); audio.speak('Hi! It is me, Pip!'); }
+          syncVoice();
+        });
+        document.addEventListener('pip:sound', syncVoice);
+        syncVoice();
+        var styleBtn = $('#voiceStyle');
+        if (styleBtn) {
+          if (!audio.ttsOK()) { styleBtn.hidden = true; } else {
+            var syncStyle = function () { styleBtn.textContent = audio.getMode() === 'words' ? 'Voice: cute words (tap for babble)' : 'Voice: baby babble (tap for words)'; };
+            styleBtn.addEventListener('click', function () {
+              audio.setMode(audio.getMode() === 'words' ? 'babble' : 'words');
+              syncStyle();
+              audio.speak('Hi! It is me, Pip!');
+            });
+            syncStyle();
+          }
+        }
+      }
+    }
+
+    /* opening line: a personal greeting that uses what Pip remembers */
+    addMsg('pip', memory.greeting() + ' Type something, or tap a suggestion below.');
   })();
 
   /* ---------- 11. Magical transition into the Dream Engine ---------- */

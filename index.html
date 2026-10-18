@@ -11,7 +11,10 @@
   <!-- Optional web fonts. If they fail to load, the fallback fonts in style.css are used. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/images/pip_avatar_cloud.jpg" fetchpriority="high">
+  <!-- fonts load without blocking the page (media trick); the fallback fonts show until they arrive -->
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
 
   <link rel="stylesheet" href="style.css">
   <script>document.documentElement.classList.add('js');</script>
@@ -403,6 +406,28 @@
       </div>
     </section>
 
+    <!-- ===== D2. Dream Delivery (Tier 2): the route draws itself as you scroll ===== -->
+    <section class="delivery" id="delivery" aria-labelledby="deliveryTitle">
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">Tonight's route</p>
+          <h2 id="deliveryTitle">Pip's dream delivery</h2>
+          <p>Scroll slowly and follow the little star as Pip carries one dream across the night, one stop at a time.</p>
+        </div>
+        <figure class="delivery-map" id="deliveryMap">
+          <svg viewBox="0 0 440 760" role="img" aria-labelledby="deliverySvgTitle">
+            <title id="deliverySvgTitle">A glowing route with five stops: Pip's Nursery, Cloud Kingdom, Starlight Forest, Moon Garden and Candy Planet.</title>
+            <path class="route-ghost" id="routeGhost" d="M220 40 C150 120 150 200 220 260 C290 320 290 400 220 460 C150 520 150 600 220 660 C250 690 240 710 220 730"/>
+            <path class="route-line" id="routeLine" d="M220 40 C150 120 150 200 220 260 C290 320 290 400 220 460 C150 520 150 600 220 660 C250 690 240 710 220 730"/>
+            <g id="routeStops"></g>
+            <g class="route-marker" id="routeMarker"><use href="#i-star" x="-19" y="-19" width="38" height="38"/></g>
+          </svg>
+          <figcaption id="deliveryNote">Pip is packing a freshly mended dream at the nursery.</figcaption>
+        </figure>
+        <p class="delivery-cta"><a class="btn btn-primary" href="#engine" data-enter-engine>Make a dream for Pip to deliver</a></p>
+      </div>
+    </section>
+
     <!-- ===== E. Dream Engine ===== -->
     <section class="engine" id="engine" data-mood="peaceful" aria-labelledby="engineTitle">
       <div class="engine-sky" aria-hidden="true"><div class="stars" id="engineStars"></div></div>
@@ -480,6 +505,122 @@
           </div>
           <p class="shelf-empty" id="shelfEmpty">Your shelf is empty. Make a dream and Pip will keep a jar for you.</p>
           <ul class="jars" id="jars"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== E2. Pip's pocket storybook (Tier 2: page-turn flip, touch + keyboard) ===== -->
+    <section class="storybook" id="storybook" aria-labelledby="storybookTitle">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow dark">Pip's pocket storybook</p>
+          <h2 id="storybookTitle">The night Pip mended her first dream</h2>
+          <p>Turn the pages with the buttons, a swipe, or your arrow keys.</p>
+        </div>
+        <div class="book" id="book" tabindex="0" role="group" aria-roledescription="storybook" aria-label="Pip's pocket storybook. Use the buttons, swipe, or press the left and right arrow keys to turn pages.">
+          <div class="book-pages">
+            <article class="page page-cover">
+              <svg class="page-star" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-star"/></svg>
+              <h3>The Little Book of Pip</h3>
+              <p>A bedtime story in five pages</p>
+              <span class="page-num" aria-hidden="true">1</span>
+            </article>
+            <article class="page">
+              <p>One night, a tiny dream slipped loose from a sleeping child and drifted past Pip's window.</p>
+              <span class="page-num" aria-hidden="true">2</span>
+            </article>
+            <article class="page">
+              <p>Pip grabbed her lantern and followed the glow across the clouds.</p>
+              <span class="page-num" aria-hidden="true">3</span>
+            </article>
+            <article class="page">
+              <p>The dream had a hole shaped like a yawn. Pip patched it with starlight and a lullaby.</p>
+              <span class="page-num" aria-hidden="true">4</span>
+            </article>
+            <article class="page">
+              <p>Home it floated, whole again. Pip curled up on her cloud. The end. Goodnight.</p>
+              <span class="page-num" aria-hidden="true">5</span>
+            </article>
+          </div>
+        </div>
+        <div class="book-controls">
+          <button type="button" class="btn btn-card btn-small" id="bookPrev" aria-label="Previous page">&larr; Back</button>
+          <span class="book-count" id="bookCount" role="status" aria-live="polite">Page 1 of 5</span>
+          <button type="button" class="btn btn-card btn-small" id="bookNext" aria-label="Next page">Next &rarr;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== E3. Pip's nightlight (Tier 2: a spotlight that reveals hidden wishes) ===== -->
+    <section class="nightlight-sec" id="nightlightSec" aria-labelledby="nightlightTitle">
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">Tiny wishes in the dark</p>
+          <h2 id="nightlightTitle">Find Pip's hidden wishes</h2>
+          <p>Slide the light with your mouse or finger, or use the arrow keys. Six wishes are hiding.</p>
+        </div>
+        <div class="nightlight" id="nightlight" tabindex="0" role="group" aria-label="Nightlight. Move the light with your mouse or finger, or press the arrow keys, to find six hidden wishes.">
+          <svg class="nl-layer" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><use href="#i-constel"/></svg>
+          <div id="nlWishes"></div>
+          <div class="nl-dark" aria-hidden="true"></div>
+          <p class="nl-hint" id="nlHint" aria-hidden="true">Slide the light</p>
+        </div>
+        <p class="nl-count" id="nlCount" role="status" aria-live="polite">Wishes found: 0 of 6</p>
+        <p class="nl-actions"><button type="button" class="btn btn-ghost btn-small" id="nlReset">Hide them again</button></p>
+      </div>
+    </section>
+
+    <!-- ===== E4. Catch the falling dreams (Tier 2: mini-game) ===== -->
+    <section class="game" id="game" aria-labelledby="gameTitle">
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">A little game</p>
+          <h2 id="gameTitle">Catch the falling dreams</h2>
+          <p>Slide Pip's cloud with your mouse, finger or arrow keys. Catch as many dreams as you can in 30 seconds. Nobody loses here, there is only dreaming.</p>
+        </div>
+        <canvas class="game-canvas" id="gameCanvas" tabindex="0" aria-label="Catch the falling dreams game. Slide the cloud with your mouse or finger, or use the left and right arrow keys." aria-describedby="gameStatus">Your browser can't show the game, but the rest of Pip's nursery still works.</canvas>
+        <p class="game-status" id="gameStatus" role="status" aria-live="polite">Press Start, then slide Pip's cloud left and right.</p>
+        <p class="game-actions"><button type="button" class="btn btn-primary" id="gameStart">Start</button></p>
+      </div>
+    </section>
+
+    <!-- ===== E5. Chat with Pip (Tier 3: rule-based dialogue + memory of the visitor) ===== -->
+    <section class="chat" id="chat" aria-labelledby="chatTitle">
+      <div class="wrap">
+        <div class="section-head light reveal">
+          <p class="eyebrow">Whisper to Pip</p>
+          <h2 id="chatTitle">Chat with Pip</h2>
+          <p>Pip is always a little sleepy, but never too sleepy to talk. Tell Pip your name and Pip will remember it next time.</p>
+        </div>
+        <div class="chat-box reveal">
+          <form class="chat-name" id="nameForm" novalidate>
+            <label for="nameInput">What should Pip call you?</label>
+            <div class="chat-row">
+              <input id="nameInput" class="chat-input" type="text" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Your first name">
+              <button type="submit" class="btn btn-primary btn-small">Remember me</button>
+              <button type="button" class="btn btn-ghost btn-small" id="forgetBtn" hidden>Forget me</button>
+            </div>
+            <p class="chat-status" id="nameStatus" role="status"></p>
+          </form>
+
+          <div class="chat-log" id="chatLog" role="log" aria-label="Conversation with Pip" tabindex="0"></div>
+
+          <div class="chat-chips" id="chatChips" role="group" aria-label="Things you can ask Pip">
+            <button type="button" class="btn btn-ghost btn-small" data-say="Who are you?">Who are you?</button>
+            <button type="button" class="btn btn-ghost btn-small" data-say="Tell me a joke">Tell me a joke</button>
+            <button type="button" class="btn btn-ghost btn-small" data-say="I can't sleep">I can't sleep</button>
+            <button type="button" class="btn btn-ghost btn-small" data-say="Sing me a lullaby">Sing me a lullaby</button>
+            <button type="button" class="btn btn-ghost btn-small" data-say="What do you dream about?">What do you dream about?</button>
+          </div>
+
+          <form class="chat-send" id="chatForm" novalidate>
+            <label class="sr-only" for="chatInput">Message for Pip</label>
+            <input id="chatInput" class="chat-input" type="text" maxlength="120" autocomplete="off" placeholder="Say something...">
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+          <p class="chat-voice"><button type="button" class="btn btn-ghost btn-small" id="voiceBtn" aria-pressed="false">Hear Pip’s voice</button>
+          <button type="button" class="btn btn-ghost btn-small" id="voiceStyle">Voice: cute words</button></p>
+          <p class="chat-note">Pip follows simple storybook rules, so it is not a real AI. Nothing you type leaves this page. Your name stays in this browser only.</p>
         </div>
       </div>
     </section>

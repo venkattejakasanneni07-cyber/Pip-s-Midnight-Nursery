@@ -653,3 +653,96 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pip-wrap { perspective: 700px; }
 .pip-wrap .pip-art { transition: rotate .35s ease-out; }
 @media (prefers-reduced-motion: reduce) { .pip-wrap .pip-art { transition: none; } }
+
+/* ---------- Tier 2: Dream Delivery map (SVG path synced with scroll) ---------- */
+.delivery { position: relative; padding: clamp(70px, 10vw, 130px) 0; color: var(--ivory); background: linear-gradient(180deg, #252642 0, #1f2c55 100%); overflow: hidden; }
+.delivery-map { margin: 0 auto; max-width: 480px; }
+.delivery-map svg { display: block; width: 100%; height: auto; overflow: visible; }
+.route-ghost { fill: none; stroke: rgba(216, 201, 240, .4); stroke-width: 3; stroke-dasharray: 2 10; stroke-linecap: round; }
+.route-line { fill: none; stroke: var(--gold); stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(245, 213, 138, .7)); }
+.route-stop circle { fill: #252642; stroke: rgba(216, 201, 240, .7); stroke-width: 3; transition: fill .4s, stroke .4s; }
+.route-stop text { fill: var(--lavender); font: 700 17px var(--font-body); transition: fill .4s; }
+.route-stop.lit circle { fill: var(--gold); stroke: var(--ivory); }
+.route-stop.lit text { fill: var(--ivory); }
+.route-marker { color: var(--gold); filter: drop-shadow(0 0 9px rgba(245, 213, 138, .95)); }
+.delivery-map figcaption { margin-top: 22px; text-align: center; font-family: var(--font-display); font-style: italic; font-size: 1.15rem; line-height: 1.4; color: var(--gold); min-height: 3.2em; }
+.delivery-cta { text-align: center; margin: 24px 0 0; }
+
+/* ---------- Tier 2: storybook (page-turn flip) ---------- */
+.storybook { padding: clamp(70px, 10vw, 130px) 0; background: linear-gradient(180deg, #F3ECFB 0, var(--ivory) 100%); color: var(--ink); overflow: hidden; }
+.book { max-width: 380px; margin: 0 auto; border-radius: 12px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.book:focus-visible { outline: 3px solid var(--rose); outline-offset: 8px; }
+.book-pages { position: relative; aspect-ratio: 3 / 4; perspective: 1400px; filter: drop-shadow(0 24px 28px rgba(46, 43, 74, .28)); }
+.page { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10% 11%; background: linear-gradient(100deg, #EBDDC6 0, #FFFAF2 8%, #FFFAF2 100%); border: 1px solid rgba(150, 56, 79, .18); border-radius: 4px 18px 18px 4px; transform-origin: left center; transition: transform .9s cubic-bezier(.6, .05, .25, 1); backface-visibility: hidden; -webkit-backface-visibility: hidden; font-family: var(--font-display); }
+.page.turned { transform: rotateY(-178deg); pointer-events: none; }
+.page p { margin: 0; font-size: clamp(1.1rem, 4.6vw, 1.4rem); line-height: 1.55; }
+.page h3 { margin: 12px 0 10px; font-size: clamp(1.5rem, 6vw, 2rem); line-height: 1.2; }
+.page-star { width: 54px; height: 54px; color: var(--gold); filter: drop-shadow(0 0 10px rgba(245, 213, 138, .8)); }
+.page-num { position: absolute; bottom: 5%; font-family: var(--font-body); font-size: .82rem; font-weight: 700; color: var(--rose); }
+.page-cover { background: linear-gradient(135deg, #2E2B4A, #4A4478); color: var(--ivory); border-color: rgba(245, 213, 138, .5); }
+.page-cover .page-num { color: var(--gold); }
+.book-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 30px; }
+.book-count { min-width: 6.5em; text-align: center; font-weight: 700; color: var(--ink); }
+.book-controls .btn[aria-disabled="true"] { opacity: .4; cursor: default; transform: none; }
+
+/* ---------- Tier 2: nightlight (flashlight that reveals hidden wishes) ---------- */
+.nightlight-sec { padding: clamp(70px, 10vw, 130px) 0; color: var(--ivory); background: linear-gradient(180deg, #1f2c55 0, #181933 100%); overflow: hidden; }
+.nightlight { --nl-r: 95px; --lx: 50%; --ly: 50%; position: relative; max-width: 760px; height: clamp(260px, 62vw, 380px); margin: 0 auto; border-radius: var(--radius); overflow: hidden; border: 1px solid rgba(255, 247, 237, .2); background: radial-gradient(ellipse at 50% 40%, #3b4180 0, #23264b 75%); touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.nightlight:focus-visible { outline: 3px solid var(--gold); outline-offset: 6px; }
+.nl-layer { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(245, 213, 138, .55); opacity: .7; }
+.nl-wish { position: absolute; z-index: 1; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; width: 110px; text-align: center; color: var(--gold); pointer-events: none; }
+.nl-wish svg { width: 32px; height: 32px; filter: drop-shadow(0 0 8px rgba(245, 213, 138, .9)); }
+.nl-wish span { font: 700 .76rem/1.2 var(--font-body); color: var(--ivory); }
+.nl-wish.found { z-index: 3; animation: twinkle 2.4s ease-in-out infinite; }
+.nl-dark { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(circle var(--nl-r) at var(--lx) var(--ly), rgba(8, 8, 26, 0) 0, rgba(8, 8, 26, 0) 55%, rgba(8, 8, 26, .985) 100%); }
+.nl-hint { position: absolute; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; font-family: var(--font-display); font-style: italic; font-size: 1.2rem; color: var(--gold); pointer-events: none; transition: opacity .6s; }
+.nightlight.moved .nl-hint { opacity: 0; }
+.nl-count { text-align: center; margin: 22px 0 0; font-weight: 700; color: var(--lavender); min-height: 1.6em; }
+.nl-actions { text-align: center; margin: 12px 0 0; }
+.nightlight-sec .btn-small { min-height: 44px; }
+
+/* ---------- Tier 2: mini-game (catch the falling dreams) ---------- */
+.game { padding: clamp(70px, 10vw, 130px) 0; color: var(--ivory); background: linear-gradient(180deg, #181933 0, #252642 100%); overflow: hidden; }
+.game-canvas { display: block; width: 100%; max-width: 560px; aspect-ratio: 5 / 4; margin: 0 auto; border-radius: var(--radius); border: 1px solid rgba(255, 247, 237, .25); background: #23264b; touch-action: pan-y; }
+.game-canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 6px; }
+.game-status { text-align: center; margin: 22px auto 0; max-width: 560px; font-family: var(--font-display); font-style: italic; font-size: 1.1rem; color: var(--gold); min-height: 3em; }
+.game-actions { text-align: center; margin: 14px 0 0; }
+@media (prefers-reduced-motion: reduce) {
+  .page { transition: none; }
+  .nl-wish.found { animation: none; }
+  .nl-hint { transition: none; }
+}
+
+/* ---------- Tier 3: Chat with Pip + remembers the visitor ---------- */
+.chat { padding: clamp(70px, 10vw, 130px) 0; color: var(--ivory); background: linear-gradient(180deg, #252642 0, #2f3060 100%); overflow: hidden; }
+.chat-box { max-width: 640px; margin: 0 auto; padding: 22px 18px; border-radius: var(--radius); background: rgba(24, 25, 51, .55); border: 1px solid rgba(255, 247, 237, .2); }
+.chat-name label { display: block; font-weight: 700; color: var(--gold); margin-bottom: 8px; }
+.chat-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.chat-row .chat-input { flex: 1 1 160px; }
+.chat-input { min-height: 48px; padding: 10px 18px; border-radius: 999px; border: 2px solid transparent; background: var(--ivory); color: var(--midnight); font: inherit; font-size: 1rem; min-width: 0; }
+.chat-input::placeholder { color: #5A5675; opacity: 1; }
+.chat-input:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.chat-status { min-height: 1.5em; margin: 8px 0 0; font-size: .92rem; color: var(--lavender); }
+.chat-log { display: flex; flex-direction: column; gap: 10px; height: 280px; overflow-y: auto; padding: 14px; margin-top: 8px; border-radius: 20px; background: rgba(255, 247, 237, .06); border: 1px solid rgba(255, 247, 237, .15); overscroll-behavior: contain; }
+.chat-log:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.msg { margin: 0; max-width: 86%; padding: 10px 14px; border-radius: 18px; line-height: 1.45; font-size: 1rem; overflow-wrap: anywhere; }
+.msg-pip { align-self: flex-start; background: var(--ivory); color: var(--midnight); border-bottom-left-radius: 6px; }
+.msg-you { align-self: flex-end; background: var(--gold); color: var(--midnight); border-bottom-right-radius: 6px; }
+.msg-who { display: block; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #5A3050; margin-bottom: 2px; }
+.msg-you .msg-who { color: #3b3566; }
+.msg-typing { font-style: italic; color: #5A5675; }
+.chat .btn-ghost { background: transparent; }
+.chat .btn-ghost:hover { background: rgba(255, 247, 237, .14); }
+.chat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.chat-send { display: flex; gap: 10px; }
+.chat-send .chat-input { flex: 1 1 auto; }
+.chat-voice { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-note { margin: 14px 0 0; font-size: .8rem; color: var(--lavender); }
+@media (min-width: 700px) { .chat-box { padding: 30px; } }
+@media (prefers-reduced-motion: reduce) { .chat-log { scroll-behavior: auto; } }
+
+/* ---------- Tier 1: Pip's eyes follow the pointer (overlay on the untouched official picture) ---------- */
+.pip-art { position: relative; }
+.pip-eyes { position: absolute; inset: 0; pointer-events: none; }
+.pip-eye { position: absolute; width: 6.75%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, var(--patch) 0, var(--patch) 74%, transparent 100%); }
+.pip-glint { position: absolute; left: 50%; top: 50%; width: 37%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 42% 38%, #FFFBE6 0, #FFEDB0 55%, #F8D883 100%); box-shadow: 0 0 7px 2px rgba(255, 214, 120, .5); transform: translate(calc(-50% + var(--ex, 0) * 60%), calc(-50% + var(--ey, 0) * 60%)); transition: transform .16s ease-out; }
