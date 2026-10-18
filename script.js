@@ -111,6 +111,7 @@
   var hero = $('.hero');
   var moon = $('#moon');
   var pipWrap = $('.pip-wrap');
+  var pipArt = $('.pip-wrap .pip-art');
   var clouds = $$('.cloud');
 
   if (!reduceMotion && hero) {
@@ -122,7 +123,12 @@
       hero.style.setProperty('--my', (e.clientY - r.top) + 'px');
       if (moon) moon.style.translate = (x * -34) + 'px ' + (y * -24) + 'px';
       if (pipWrap) pipWrap.style.translate = (x * 22) + 'px ' + (y * 14) + 'px';
+      if (pipWrap) pipWrap.style.rotate = (x * 12) + 'deg';   /* Tier 1: head tilts toward the pointer */
+      if (pipArt) pipArt.style.rotate = '1 0 0 ' + (-y * 12) + 'deg';   /* nod up / down toward the pointer */
       clouds.forEach(function (c, i) { c.style.marginTop = (y * (10 + i * 8)) + 'px'; });
+    }, { passive: true });
+    hero.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'mouse' && pipWrap) { pipWrap.style.rotate = '0deg'; pipWrap.style.translate = '0px 0px'; if (pipArt) pipArt.style.rotate = '1 0 0 0deg'; }
     }, { passive: true });
   }
 
@@ -132,6 +138,14 @@
       var r = hero.getBoundingClientRect();
       hero.style.setProperty('--mx', (e.clientX - r.left) + 'px');
       hero.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      if (e.pointerType !== 'mouse' && pipWrap) {   /* Tier 1 touch fallback: Pip leans toward your tap, then settles */
+        var tx2 = (e.clientX - r.left) / r.width - 0.5;
+        pipWrap.style.rotate = (tx2 * 16) + 'deg';
+        pipWrap.style.translate = (tx2 * 22) + 'px 0px';
+        if (pipArt) pipArt.style.rotate = '1 0 0 ' + (-((e.clientY - r.top) / r.height - 0.5) * 14) + 'deg';
+        clearTimeout(pipWrap._settle);
+        pipWrap._settle = setTimeout(function () { pipWrap.style.rotate = '0deg'; pipWrap.style.translate = '0px 0px'; if (pipArt) pipArt.style.rotate = '1 0 0 0deg'; }, 1400);
+      }
     }, { passive: true });
   }
 
@@ -671,6 +685,7 @@
     var next = !document.documentElement.classList.contains('day');
     setDay(next);
     try { localStorage.setItem('pip-theme', next ? 'day' : 'night'); } catch (err) { /* ignore */ }
+    document.dispatchEvent(new CustomEvent('pip:mood', { detail: { day: next } }));
   });
 
   /* ---------- Dream shelf: every dream becomes a jar (kept in this browser) ---------- */
@@ -758,12 +773,19 @@
       'Sleepy? Me too. Always a little.'
     ];
     var n = 0, hideTimer = null;
-    hit.addEventListener('click', function () {
-      bubble.textContent = lines[n % lines.length];
-      n++;
+    function say(text) {
+      bubble.textContent = text;
       bubble.classList.add('show');
       clearTimeout(hideTimer);
       hideTimer = setTimeout(function () { bubble.classList.remove('show'); }, 3400);
+    }
+    /* Tier 1: the Day/Night toggle changes Pip's mood, shown by the badge and by what Pip says */
+    document.addEventListener('pip:mood', function (ev) {
+      say(ev.detail && ev.detail.day ? 'Ooh, so bright! Good morning, sleepyhead.' : 'Lights low again. My favourite time!');
+    });
+    hit.addEventListener('click', function () {
+      say(lines[n % lines.length]);
+      n++;
       audio.chime();
       if (art && !reduceMotion) {
         art.classList.remove('wiggle'); void art.offsetWidth; art.classList.add('wiggle');

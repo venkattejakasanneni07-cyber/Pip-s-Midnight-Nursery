@@ -632,3 +632,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* Pip's bubble sits at the bottom of the picture so it never collides with the moon */
 .pip-bubble { top: auto; bottom: 4%; }
 .pip-bubble::after { bottom: auto; top: -7px; }
+
+/* ---------- Tier 1: Pip leans toward the pointer, and the Day/Night toggle changes Pip's mood ---------- */
+.pip-wrap { transform-origin: 50% 85%; transition: translate .25s ease-out, rotate .35s ease-out; }
+.pip-mood { position: absolute; right: 2%; top: 30%; width: 44px; height: 44px; z-index: 3; pointer-events: none; }
+.mood-night i { position: absolute; font-family: var(--font-display); font-style: italic; font-weight: 700; color: var(--gold); text-shadow: 0 0 8px rgba(245, 213, 138, .7); opacity: 0; animation: zfloat 3.6s ease-in infinite; }
+.mood-night i:nth-child(1) { left: 2px; bottom: 0; font-size: 1rem; }
+.mood-night i:nth-child(2) { left: 14px; bottom: 10px; font-size: 1.3rem; animation-delay: 1.2s; }
+.mood-night i:nth-child(3) { left: 28px; bottom: 22px; font-size: 1.6rem; animation-delay: 2.4s; }
+.mood-day { display: none; position: absolute; inset: 7px; border-radius: 50%; background: radial-gradient(circle, #FFF3C4 0 45%, #F5D58A 46% 100%); box-shadow: 0 0 0 5px rgba(245, 213, 138, .4), 0 0 22px 8px rgba(245, 213, 138, .7); animation: twinkle 3s ease-in-out infinite; }
+.day .mood-night { display: none; }
+.day .mood-day { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  .pip-wrap { transition: none; }
+  .mood-night i { animation: none; opacity: .9; }
+  .mood-day { animation: none; }
+}
+
+/* nod up / down: a little 3D perspective so the tilt looks like looking up or down */
+.pip-wrap { perspective: 700px; }
+.pip-wrap .pip-art { transition: rotate .35s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pip-wrap .pip-art { transition: none; } }
