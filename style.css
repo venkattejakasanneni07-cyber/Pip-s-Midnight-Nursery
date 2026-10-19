@@ -760,3 +760,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .gb-list strong { display: block; color: var(--gold); font-size: 1.02rem; }
 .gb-list p { margin: 4px 0 0; color: var(--ivory); }
 .gb-list time { display: block; margin-top: 6px; font-size: .75rem; color: var(--lavender); }
+
+/* ---------- Header fit: keep the menu on one line on laptop-width windows (900 to 1299 px) ---------- */
+@media (min-width: 900px) and (max-width: 1299px) {
+  .site-header { gap: 8px; }
+  .brand span, .site-nav a, .sound-label { white-space: nowrap; }
+  .brand span { font-size: .95rem; }
+  .site-nav { gap: 2px; }
+  .site-nav a { padding: 8px 9px; font-size: .88rem; }
+  .sound-toggle { padding: 8px 12px; }
+}
+@media (min-width: 900px) and (max-width: 1099px) {
+  .sound-label { display: none; }   /* icon-only buttons on narrow laptops; aria-labels still say what they do */
+  .brand span { font-size: .88rem; }
+}
