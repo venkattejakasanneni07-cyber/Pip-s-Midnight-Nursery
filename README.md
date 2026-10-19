@@ -119,22 +119,38 @@ Everything is made live in the browser with the Web Audio API, so there are no a
 ## What you still must do for submission (due 19 Oct 2026, 17:17 IST)
 
 - [ ] Public GitHub repo with commits made between 17 and 19 October (commit often, with clear messages).
-- [ ] Live website URL (Netlify Drop or GitHub Pages).
+- [ ] Live website URL (Vercel).
 - [ ] A short write-up of a few paragraphs about how you built it.
 - [ ] Credits (already in the site footer; paste them into the form too).
 - [ ] Run Lighthouse (Chrome DevTools > Lighthouse > Mobile) on the live URL and aim for 90+.
 - [ ] Open the live site once and check the browser console (F12) for red errors.
 
-## Publish
+## Publish (Vercel)
 
-**Netlify Drop:** drag the whole folder onto https://app.netlify.com/drop.
+The live site is hosted on Vercel. It is a plain static site, so there is no build step.
 
-**GitHub Pages:** create a public repo, upload the files and `assets` folder, then Settings > Pages > Deploy from branch `main`, folder `/ (root)`.
+**Option 1: GitHub + Vercel (recommended, updates itself on every push)**
+
+1. Push the whole folder to a public GitHub repo (`index.html` must be at the top level, with the `assets` folder next to it).
+2. Go to https://vercel.com and log in with GitHub.
+3. Click "Add New..." > "Project" and import the repo.
+4. Leave Framework Preset as "Other". Leave Build Command and Output Directory empty.
+5. Click "Deploy". Vercel gives you a live `.vercel.app` URL.
+6. After this, every `git push` to `main` redeploys the site automatically.
+
+**Option 2: Vercel CLI (no GitHub connection)**
+
+1. Install Node.js, then run `npm install -g vercel`.
+2. In the project folder, run `vercel` and follow the questions (accept the defaults).
+3. Run `vercel --prod` to publish to the main live URL.
+
+**Backup option: GitHub Pages** (only if you ever need it): create a public repo, upload the files and `assets` folder, then Settings > Pages > Deploy from branch `main`, folder `/ (root)`.
 
 ## Common problems
 
 - **Images do not show online:** names are case-sensitive and the `assets/images` folder must be uploaded next to `index.html`. Press Ctrl+Shift+R after changes.
 - **Red "ERR_FILE_NOT_FOUND" in the console:** an image is missing from `assets/images/`. Make sure the whole `assets` folder is uploaded.
-- **Works locally, broken online:** make sure `index.html` is at the top level and the `assets` folder was uploaded too.
+- **Works locally, broken online:** make sure `index.html` is at the top level of the repo (or the folder you deployed) and the `assets` folder was uploaded too. On Vercel, if you see a 404, check that the project's Root Directory is the folder that contains `index.html`.
+- **Vercel still shows the old version:** open the project's "Deployments" tab and check that the latest deployment finished. Then hard refresh with Ctrl+Shift+R.
 - **Guestbook says "Could not load dreams" or "could not be saved":** open the browser console (F12). A 404 usually means `SUPABASE_URL` has `/rest/v1/` on the end (remove it). Error `42501` means a Row Level Security policy or a table permission is missing (run the SQL above again). It also cannot load when `index.html` is opened by double-clicking; use Live Server or the live site.
-- **Copy button says it could not copy:** some browsers block copying on plain `file://` pages. It works on Live Server, Netlify and GitHub Pages.
+- **Copy button says it could not copy:** some browsers block copying on plain `file://` pages. It works on Live Server, Vercel and GitHub Pages.
