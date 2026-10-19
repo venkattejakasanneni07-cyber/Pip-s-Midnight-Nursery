@@ -736,7 +736,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .chat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .chat-send { display: flex; gap: 10px; }
 .chat-send .chat-input { flex: 1 1 auto; }
-.chat-voice { margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .chat-note { margin: 14px 0 0; font-size: .8rem; color: var(--lavender); }
 @media (min-width: 700px) { .chat-box { padding: 30px; } }
 @media (prefers-reduced-motion: reduce) { .chat-log { scroll-behavior: auto; } }

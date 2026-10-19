@@ -632,8 +632,6 @@
       btn.setAttribute('aria-pressed', String(on));
       btn.setAttribute('aria-label', on ? 'Mute all sound' : 'Turn sound on');
       if (label) label.textContent = on ? 'Sound on' : 'Sound off';
-      if (!on) { stopVoice(); if ('speechSynthesis' in window) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } } }
-      document.dispatchEvent(new CustomEvent('pip:sound'));
     }
     function stopAmbient() { clearInterval(timer); ambient = false; }
     function startAmbient() { clearInterval(timer); ambient = true; step = 0; tick(); timer = setInterval(tick, 650); }
@@ -678,134 +676,6 @@
       note(N[scale[Math.floor(Math.random() * scale.length)]], 0.45, 0.22);
     }
 
-    /* Pip's baby voice: no real words, just cute babble made with the Web Audio API.
-       Each syllable is a tiny chirp on a pentatonic scale, so the reply sounds like a small tune.
-       The mood of the reply changes the tune: questions rise, "!" sparkles, sleepy replies hum a lullaby. */
-    var VS = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];   /* C5 D5 E5 G5 A5 C6 D6 E6 */
-    var bus = null;
-    function canSpeak() { return supported; }
-    function stopVoice() {
-      if (!bus || !ctx) return;
-      var b = bus; bus = null;
-      try { b.gain.cancelScheduledValues(ctx.currentTime); b.gain.setTargetAtTime(0, ctx.currentTime, 0.02); } catch (e) { /* ignore */ }
-      setTimeout(function () { try { b.disconnect(); } catch (e) { /* ignore */ } }, 250);
-    }
-    function seedFrom(text) {
-      var h = 2166136261;
-      for (var i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
-      return function () { h += 0x6D2B79F5; var t = Math.imul(h ^ (h >>> 15), 1 | h); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-    }
-    /* one chirp: a little "ba" / "wa" sound (chirps up, vowel-like filter opens) or a soft bell for the ending tune */
-    function chirp(t, f, dur, vol, out, bell) {
-      var g = ctx.createGain(), o1 = ctx.createOscillator();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.linearRampToValueAtTime(vol, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o1.type = bell ? 'sine' : 'triangle';
-      if (bell) {
-        o1.frequency.setValueAtTime(f, t);
-      } else {
-        o1.frequency.setValueAtTime(f * 0.9, t);
-        o1.frequency.exponentialRampToValueAtTime(f, t + 0.035);
-      }
-      o1.connect(g);
-      if (!bell) {
-        var o2 = ctx.createOscillator(), flt = ctx.createBiquadFilter(), g2 = ctx.createGain();
-        o2.type = 'sawtooth';
-        o2.frequency.setValueAtTime(f * 0.9, t);
-        o2.frequency.exponentialRampToValueAtTime(f, t + 0.035);
-        flt.type = 'bandpass'; flt.Q.value = 3;
-        flt.frequency.setValueAtTime(700, t);
-        flt.frequency.linearRampToValueAtTime(1700, t + dur * 0.7);
-        g2.gain.value = 0.55;
-        o2.connect(flt); flt.connect(g2); g2.connect(g);
-        o2.start(t); o2.stop(t + dur + 0.05);
-      }
-      g.connect(out);
-      o1.start(t); o1.stop(t + dur + 0.05);
-    }
-    function babble(text) {
-      if (!on || !ensure()) return false;
-      try {
-        stopVoice();
-        text = String(text);
-        var rnd = seedFrom(text);
-        var sleepy = /(sleep|yawn|goodnight|good night|snuggle|shh|breathe|lullaby|dream|stars)/i.test(text);
-        var ask = /\?\s*$/.test(text.trim());
-        var happy = /!/.test(text) && !sleepy;
-        var step = sleepy ? 0.3 : (happy ? 0.15 : 0.19);
-        var dur = sleepy ? 0.25 : (happy ? 0.11 : 0.14);
-        var hi = sleepy ? 4 : 7, idx = sleepy ? 2 : 3;
-        bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
-        var t = ctx.currentTime + 0.05, count = 0;
-        var words = text.replace(/[^\w\s'.,!?]/g, ' ').split(/\s+/).filter(Boolean).slice(0, 10);
-        words.forEach(function (w) {
-          var syl = Math.min(2, Math.ceil(w.replace(/[^a-z]/gi, '').length / 5)) || 1;
-          for (var k = 0; k < syl && count < 16; k++, count++) {
-            idx += [-2, -1, -1, 0, 1, 1, 2][Math.floor(rnd() * 7)];
-            idx = Math.max(0, Math.min(hi, idx));
-            chirp(t, VS[idx], dur, 0.7, bus, false);
-            t += step;
-          }
-          t += /[.,!?]$/.test(w) ? 0.14 : 0.05;
-        });
-        /* the ending: a question rises, a happy reply sparkles, a sleepy one hums a falling lullaby, others settle down */
-        if (ask) {
-          chirp(t, VS[Math.min(7, idx + 1)], 0.16, 0.5, bus, false);
-          chirp(t + 0.17, VS[Math.min(7, idx + 3)], 0.3, 0.5, bus, false);
-        } else if (sleepy) {
-          [2, 1, 0].forEach(function (n, i) { chirp(t + 0.1 + i * 0.38, VS[n], 0.9, 0.35, bus, true); });
-        } else if (happy) {
-          [3, 4, 5, 7].forEach(function (n, i) { chirp(t + 0.05 + i * 0.09, VS[n], 0.35, 0.3, bus, true); });
-        } else {
-          chirp(t, VS[3], 0.18, 0.5, bus, false);
-          chirp(t + 0.2, VS[0], 0.4, 0.5, bus, false);
-        }
-        return true;
-      } catch (e) { return false; }
-    }
-
-    /* Pip's spoken words: the browser's own voice, pitched as high as it allows, with a tiny sparkle first.
-       Visitors can switch to the wordless babble instead. */
-    var mode = 'words', tts = null;
-    try { if (localStorage.getItem('pip-voice') === 'babble') mode = 'babble'; } catch (e) { /* ignore */ }
-    function ttsOK() { return 'speechSynthesis' in window && typeof window.SpeechSynthesisUtterance === 'function'; }
-    function pickTts() {
-      if (!ttsOK()) return;
-      var list = window.speechSynthesis.getVoices() || [];
-      var en = list.filter(function (v) { return /^en/i.test(v.lang); });
-      tts = en.filter(function (v) { return /(google uk english female|google us english|samantha|zira|aria|jenny|karen|susan|female)/i.test(v.name); })[0] || en[0] || null;
-    }
-    if (ttsOK()) {
-      pickTts();
-      if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener('voiceschanged', pickTts);
-    }
-    function speakWords(text) {
-      try {
-        window.speechSynthesis.cancel();
-        var u = new window.SpeechSynthesisUtterance(String(text).replace(/…|\.\.\./g, ',').replace(/[“”"]/g, ''));
-        u.lang = (tts && tts.lang) || 'en-US';
-        if (tts) u.voice = tts;
-        u.pitch = 2;
-        u.rate = 1.05;
-        u.volume = 1;
-        window.speechSynthesis.speak(u);
-        return true;
-      } catch (e) { return false; }
-    }
-    function speak(text) {
-      if (!on || !ensure()) return false;
-      if (mode === 'words' && ttsOK()) {
-        stopVoice();
-        bus = ctx.createGain(); bus.gain.value = 1; bus.connect(master);
-        var t0 = ctx.currentTime + 0.02;
-        [3, 5, 7].forEach(function (n, i) { chirp(t0 + i * 0.07, VS[n], 0.25, 0.35, bus, true); });
-        return speakWords(text);
-      }
-      return babble(text);
-    }
-    function setMode(m) { mode = m === 'babble' ? 'babble' : 'words'; try { localStorage.setItem('pip-voice', mode); } catch (e) { /* ignore */ } }
-
     btn.addEventListener('click', function () {
       if (on) setOn(false); else setOn(true, true);
     });
@@ -815,7 +685,7 @@
       if (!document.hidden && on && ambient) timer = setInterval(tick, 650);
     });
     ui();
-    return { setOn: setOn, wake: wake, speak: speak, canSpeak: canSpeak, ttsOK: ttsOK, getMode: function () { return mode; }, setMode: setMode, isOn: function () { return on; }, playPhrase: playPhrase, playNote: playNote, chime: chime };
+    return { setOn: setOn, playPhrase: playPhrase, playNote: playNote, chime: chime };
   })();
 
   /* Click chimes (only audible when sound is on) */
@@ -1529,7 +1399,7 @@
       setTimeout(function () {
         typing.remove();
         addMsg('pip', text);
-        if (!audio.speak(text)) audio.chime();
+        audio.chime();
       }, delay);
     }
 
@@ -1575,38 +1445,6 @@
     });
     document.addEventListener('pip:name', syncName);
     syncName();
-
-    /* voice button: mirrors the header Sound switch, so mute always works */
-    var voiceBtn = $('#voiceBtn');
-    if (voiceBtn) {
-      if (!audio.canSpeak()) {
-        voiceBtn.hidden = true;
-      } else {
-        var syncVoice = function () {
-          var on = audio.isOn();
-          voiceBtn.setAttribute('aria-pressed', String(on));
-          voiceBtn.textContent = on ? 'Pip\u2019s voice: on (tap to mute)' : 'Hear Pip\u2019s voice';
-        };
-        voiceBtn.addEventListener('click', function () {
-          if (audio.isOn()) { audio.setOn(false); } else { audio.wake(); audio.speak('Hi! It is me, Pip!'); }
-          syncVoice();
-        });
-        document.addEventListener('pip:sound', syncVoice);
-        syncVoice();
-        var styleBtn = $('#voiceStyle');
-        if (styleBtn) {
-          if (!audio.ttsOK()) { styleBtn.hidden = true; } else {
-            var syncStyle = function () { styleBtn.textContent = audio.getMode() === 'words' ? 'Voice: cute words (tap for babble)' : 'Voice: baby babble (tap for words)'; };
-            styleBtn.addEventListener('click', function () {
-              audio.setMode(audio.getMode() === 'words' ? 'babble' : 'words');
-              syncStyle();
-              audio.speak('Hi! It is me, Pip!');
-            });
-            syncStyle();
-          }
-        }
-      }
-    }
 
     /* opening line: a personal greeting that uses what Pip remembers */
     addMsg('pip', memory.greeting() + ' Type something, or tap a suggestion below.');
